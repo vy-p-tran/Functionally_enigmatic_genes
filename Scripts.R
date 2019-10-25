@@ -3,13 +3,15 @@
 #Most codes were modifed from ARCHS4 https://amp.pharm.mssm.edu/archs4/help.html (Ma'ayan et al.), and from the Weight Gene 
 #Correlation Network Analysis (WGCNA) tutorial https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/Rpackages/WGCNA/ 
 #(Peter Langelder and Steve Horvath)
-
-
-#Set working directory:
+#################################################################################################
+#Check working directory:
 getwd()
 
 #Load required packages:
-install.packages("BiocManager") 
+if(!require("BiocManager", "plotrix")){
+  install.packages("BiocManager")
+}
+
 BiocManager::install("WGCNA") #Intall WGCNA package, if necessary
 library(WGCNA)
 library(plotrix)
@@ -18,21 +20,28 @@ library(plotrix)
 options(stringsAsFactors=FALSE) 
 
 #Load RNA-seq data:
-load(file = "PRAD.Rfile")
-load(file = "COAD.Rfile")
+load(file = "Data Inputs/PRAD.Rfile") #Opened as PRAD_DATA
+load(file = "Data Inputs/COAD.Rfile") #Opened as COAD_DATA
+load(file = "Data Inputs/GBMLGG.Rfile") #Opened as GBMLGG_DATA
 
-#Load PubMed publication and disease index data:
-load(file = "PubMed.ID.for.all.TCGA.genes.Rdata")
-load(file = "Prognostic unfavorable genes.Rdata") 
+#Load PubMed publications, unfavorable genes, and disease index data:
+load(file = "Data Inputs/PubMed_ID_for_all_TCGA_genes.Rdata") #Opened as PubMed
+load(file = "Data Inputs/Prognostic_unfavorable_genes.Rdata") #Opened as unfavorable_genes
+#################################################################################################
 
 ## 1. Create Figure 1 for PubMed distribution of prognostic unfavorable genes:
 
-# Create a PubMed data frame for prognostic unfavorable genes:
+# Create a data frame including both Pubmed publications and prognostic unfavorable genes:
 colnames(unfavorable_genes) = c("genename")
 Pubmed_unfavorable = merge(unfavorable_genes, PubMed, by = "genename")
+colnames(Pubmed_unfavorable)
         
 #Create Figure 1a:
 
+#Open a pdf file
+pdf("Plots/Figure_1a.pdf") 
+
+#Plot Figure 1a:
 density_unfavorable = density(Pubmed_unfavorable$PubMed)
 gap.plot(x = density_unfavorable$x, y = density_unfavorable$y, gap = c(250, 7650), gap.axis = "x", type = "l", xlim = c(0, 7750), ylab = "Density", xlab = "Number of PubMed publications", xtics = c(0, 50, 100, 150, 300, 6500, 7700))
 axis.break(1, 250, breakcol="white", style="gap") #to cover the lines created by the gap.plot fucntion
@@ -41,7 +50,13 @@ axis.break(axis = 3, 250, style = "slash")
 abline(v = 50, col = "red")
 text(x = 50, y = 0.015,"cut-off",pos=4, col = "red")
 
+# Close the pdf file
+dev.off() 
+#################################################################################################
+
 # Create pie charts for Figure 1 b-e:
+pdf("Plots/Figure_1b_to_e.pdf", 8,7) 
+
 par(mfrow = c(2,2), mar =c(3,5,1,9))
 slices_enigmatic_autosomal = c(2.5, 7.4, 90.1)
 lbls = c("Autosomal dominant", "Autosomal recessive", "Other")
@@ -68,6 +83,9 @@ pct = round(slices_wellstudied_species/sum(slices_wellstudied_species)*100, digi
 lbls = paste(lbls, pct) # add percents to labels 
 lbls = paste(lbls,"%",sep="") # add % to labels 
 pie(slices_wellstudied_species, labels = lbls, col = c("aquamarine4","hotpink", "darkgray"))
+
+dev.off()
+#################################################################################################
 
 ## 2. WGCNA Analysis for prostate adenocarcinoma (PRAD) data set
 
