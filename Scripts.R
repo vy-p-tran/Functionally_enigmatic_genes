@@ -12,21 +12,25 @@ if(!require("BiocManager", "plotrix")){
   install.packages("BiocManager")
 }
 
-BiocManager::install("WGCNA") #Intall WGCNA package, if necessary
+BiocManager::install("WGCNA")
+install.packages("tidyverse")
+library(tidyverse)
 library(WGCNA)
 library(plotrix)
+library(tidyverse)
 
 # Important setting:
 options(stringsAsFactors=FALSE) 
 
 #Load RNA-seq data:
-load(file = "Data Inputs/PRAD.Rfile") #Opened as PRAD_DATA
-load(file = "Data Inputs/COAD.Rfile") #Opened as COAD_DATA
-load(file = "Data Inputs/GBMLGG.Rfile") #Opened as GBMLGG_DATA
+load(file = "Data Inputs/PRAD.Rfile") #Loaded as PRAD_DATA
+load(file = "Data Inputs/COAD.Rfile") #Loaded as COAD_DATA
+load(file = "Data Inputs/GBMLGG.Rfile") #Loaded as GBMLGG_DATA
 
 #Load PubMed publications, unfavorable genes, and disease index data:
-load(file = "Data Inputs/PubMed_ID_for_all_TCGA_genes.Rdata") #Opened as PubMed
-load(file = "Data Inputs/Prognostic_unfavorable_genes.Rdata") #Opened as unfavorable_genes
+load(file = "Data Inputs/PubMed_ID_for_all_TCGA_genes.Rdata") #Loaded as PubMed
+load(file = "Data Inputs/Prognostic_unfavorable_genes.Rdata") #Loaded as unfavorable_genes
+load(file = "Data Inputs/Gleasonscore_PRAD.Rdata") #Loaded as Gleason
 #################################################################################################
 
 ## 1. Create Figure 1 for PubMed distribution of prognostic unfavorable genes:
@@ -108,19 +112,22 @@ PRADdata = t(PRAD1[order(apply(PRAD1,1,mad), decreasing = T)[1:10000],])
 gsg = goodSamplesGenes(PRADdata, verbose = 3)
 gsg$allOK
 
-#The command returns "TRUE", so all genes have passed the cuts.
+#The command returned "TRUE", so all genes have passed the cuts.
 
 # Re-cluster the samples (in contrast to clustering genes that will come later) to see if there are any obvious outliers:
 sampleTree = hclust(dist(PRADdata), method = "average")
 # Plot the sample tree:
 sizeGrWindow(12,9)
-pdf(file = "Plots/sampleClustering.pdf", width = 12, height = 9);
+pdf(file = "Plots/Sample clustering to detect outliers for PRAD.pdf", width = 12, height = 9);
 par(cex = 0.6);
 par(mar = c(0,4,2,0))
-plot(sampleTree, main = "Sample clustering to detect outliers", sub="", xlab="", cex.lab = 1.5,
+plot(sampleTree, main = "Sample clustering to detect outliers for PRAD", sub="", xlab="", cex.lab = 1.5,
      cex.axis = 1.5, cex.main = 2)
 
+dev.off()
 #It appears there is no obvious outlier. The variable PRADdata now contains the expression data ready for WGCNA analysis.
+#################################################################################################
+
 
 #Choosing a soft-thresholding power. Constructing a weighted gene network entails the choice of the soft thresholding power β to which co-expression
 #similarity is raised to calculate adjacency. The choice of the soft thresholding power is based on the criterion of approximate scale-free topology:
@@ -129,17 +136,19 @@ plot(sampleTree, main = "Sample clustering to detect outliers", sub="", xlab="",
 powers = c(c(1:10), seq(from = 12, to=20, by=2))
 # Call the network topology analysis function
 sft = pickSoftThreshold(PRADdata, powerVector = powers, verbose = 5)
+
 # Plot the results:
 sizeGrWindow(9, 5)
 par(mfrow = c(1,2));
 cex1 = 0.9;
+pdf(file = "Plots/Soft-thresholding power for PRAD.pdf", width = 12, height = 9)
+
 # Scale-free topology fit index as a function of the soft-thresholding power
 plot(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
      xlab="Soft Threshold (power)",ylab="Scale Free Topology Model Fit,signed R^2",type="n",
      main = paste("Scale independence"));
 text(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
      labels=powers,cex=cex1,col="red");
-
 # this line corresponds to using an R^2 cut-off of h
 abline(h=0.90,col="red")
 # Mean connectivity as a function of the soft-thresholding power
@@ -148,9 +157,11 @@ plot(sft$fitIndices[,1], sft$fitIndices[,5],
      main = paste("Mean connectivity"))
 text(sft$fitIndices[,1], sft$fitIndices[,5], labels=powers, cex=cex1,col="red")
 
-Based on the scale-free topology graph, the soft-thresholding power of 6 was chosen.
+dev.off()
+#Based on the scale-free topology graph, the soft-thresholding power of 6 was chosen.
+#################################################################################################
 
-# Constructing the gene network and identifying modules:
+# Constructing the gene network and identifying modules for PRAD:
 net_PRAD = blockwiseModules(PRADdata, power = 6,
                        TOMType = "unsigned", minModuleSize = 30,
                        reassignThreshold = 0, mergeCutHeight = 0.25,
@@ -162,16 +173,21 @@ net_PRAD = blockwiseModules(PRADdata, power = 6,
 # To see how many modules were identified and what the module sizes are, one can use table(net$colors).
 table(net_PRAD$colors)
 
-Now we can visualize the modules.
+#Now we can visualize the modules.
 
 # Convert labels to colors for plotting
 mergedColors_PRAD = labels2colors(net_PRAD$colors)
+
 # Plot the dendrogram and the module colors underneath
+par(mfrow = c(1,1))
+pdf(file = "Plots/Cluster dendrogram for PRAD.pdf", width = 12, height = 9)
+
 plotDendroAndColors(net_PRAD$dendrograms[[1]], mergedColors_PRAD[net_PRAD$blockGenes[[1]]],
                     "Module colors",
                     dendroLabels = FALSE, hang = 0.03,
                     addGuide = TRUE, guideHang = 0.05, main = "Cluster dendrogram for PRAD")
-
+ dev.off()
+ 
 # We now save the module assignment and module eigengene information necessary for subsequent analysis:
 moduleLabels_PRAD = net_PRAD$colors
 moduleColors_PRAD = labels2colors(net_PRAD$colors)
@@ -179,6 +195,10 @@ MEs_PRAD = net_PRAD$MEs;
 geneTree_PRAD = net_PRAD$dendrograms[[1]];
 save(MEs_PRAD, moduleLabels_PRAD, moduleColors_PRAD, geneTree_PRAD,
      file = "Data Outputs/PRADnetwork_modulecolor_and_label.RData")
+#################################################################################################
+
+#We now create a data frame holding the following information for all genes: gene names, 
+#module color,and module membership and p-values in all modules:
 
 # Extract eigengenes:
 # Define numbers of genes and samples
@@ -189,8 +209,9 @@ nSamples = nrow(PRADdata)
 MEs0_PRAD = moduleEigengenes(PRADdata, moduleColors_PRAD)$eigengenes
 MEs_PRAD = orderMEs(MEs0_PRAD)
 
-#Calculate module membership to identify important genes. Module membership is defined as the correlation of the module eigengene 
+# Calculate module membership to identify important genes. Module membership is defined as the correlation of the module eigengene 
 # with gene expression profile of the gene.
+
 # names (colors) of the modules
 modNames_PRAD = substring(names(MEs_PRAD), 3)
 
@@ -199,9 +220,6 @@ MMPvalue_PRAD = as.data.frame(corPvalueStudent(as.matrix(geneModuleMembership_PR
 
 names(geneModuleMembership_PRAD) = paste("MM", modNames_PRAD, sep="");
 names(MMPvalue_PRAD) = paste("p.MM", modNames_PRAD, sep="");
-
-#We now create a data frame holding the following information for all genes: gene names, 
-#module color,and module membership and p-values in all modules: 
 
 # Create the starting data frame
 geneInfoPRAD = data.frame(Genename = colnames(PRADdata),
@@ -214,28 +232,25 @@ geneOrder_PRAD = order(geneInfoPRAD$moduleColor)
 geneInfoPRAD_1 = geneInfoPRAD[geneOrder_PRAD, ]
 
 #Save the data frame into a text-format spreadsheet:
-write.csv(geneInfoPRAD_1, file = "PRAD_geneMM.csv")
+write.csv(geneInfoPRAD_1, file = "Data Outputs/PRAD_geneMM.csv")
+#################################################################################################
 
 #Now we calculate scaled connectivity of genes in the PRAD network:
 
 #Create a TOM matrix:
 tom_PRAD = TOMsimilarityFromExpr(PRADdata)
-fun = fundamentalNetworkConcepts(tom_PRAD, GS = NULL) #Take > 30 minutes to compute
+fun = fundamentalNetworkConcepts(tom_PRAD, GS = NULL) #May take > 30 minutes to compute
 
 #We want the scaled connectivity k = connectivity/max(connectivity), which is an indication of hub gene significance.
 connectivity_PRAD = as.data.frame(fun$ScaledConnectivity)
-row.names(connectivity_PRAD) = colnames(PRADdata) #Take > 30 minutes to compute
+row.names(connectivity_PRAD) = colnames(PRADdata)
+ 
+#Next step is to merge the gene significance data frame with TCGA PubMed ID data.
 
-#To visualize correlation between scaled connectivity of genes and number of publications, we merge the two variables into one dataframe. 
-
-#Merge the gene significance data frame with TCGA PubMed ID data:
-
-#As for the genesig_PRAD dataframe, we first need to separate the row name into two columns (official gene symbol and Entrez ID) before merging with PubMed info:
-library(dplyr)
-connectivity_PRAD = tibble::rownames_to_column(connectivity_PRAD, "gene") #To make the rowname column into a new column.
+#First, we separate the row name into two columns (official gene symbol and Entrez ID) before merging with PubMed info:
+connectivity_PRAD = tibble::rownames_to_column(connectivity_PRAD, "gene") #To make the rowname column into a new column, using tidiverse.
 
 #Separate the "gene" column:
-library(tidyr)
 connectivity_PRAD = separate(connectivity_PRAD, 1, into = c("genename", "entrez"), sep = "([|])", remove = FALSE)
 
 #Reformat the genesig_PRAD data frame:
@@ -246,9 +261,11 @@ connectivity_PRAD = connectivity_PRAD[,-1]
 connectivity_PubMed_PRAD = merge(PubMed, connectivity_PRAD, by = "entrez")
 connectivity_PubMed_PRAD = connectivity_PubMed_PRAD[, -4]
 colnames(connectivity_PubMed_PRAD) = c("entrez", "genename", "PubMed", "scaledconnectivity")
+head(connectivity_PubMed_PRAD, 3)
 
 #Save the data:
-write.table(connectivity_PubMed_PRAD, file = "Scaled connectivity and PubMed ID for PRAD.txt")
+save(connectivity_PubMed_PRAD, file = "Data Outputs/Scaled connectivity and PubMed ID for PRAD.Rdata")
+#################################################################################################
 
 #Now we calculate correlation between scaled connectivity and PubMed publications for PRAD genes:
 
@@ -256,6 +273,7 @@ write.table(connectivity_PubMed_PRAD, file = "Scaled connectivity and PubMed ID 
 corAndPvalue(connectivity_PubMed_PRAD$PubMed, connectivity_PubMed_PRAD$scaledconnectivity, method = "kendall")
 
 #Plot a scatterplot to show the correlation between scaled connectivity and publications:
+pdf(file = "Plots/Figure_2a.pdf")
 plot(data = connectivity_PubMed_PRAD, PubMed ~ scaledconnectivity, xlim = c(0, 1.19),
      xlab = "Scaled connectivity of genes", ylab = "Number of PubMed IDs", pch=19, main = "PRAD",
      col=ifelse(PubMed > 7000 | scaledconnectivity == max(scaledconnectivity), "red", "black"))
@@ -263,11 +281,10 @@ with(data = connectivity_PubMed_PRAD,
      text(PubMed ~ scaledconnectivity, pos = 4, cex = 0.80,
           labels=ifelse(PubMed > 7000 | scaledconnectivity == max(scaledconnectivity), 
                         as.character(connectivity_PubMed_PRAD$genename), "")))
+dev.off()
+#################################################################################################
 
-We also correlate scaled connectivity with Gleason score, a metric for prostate cancer severity:
-
-#Load Gleason score data:
-load(file = "Gleasonscore_PRAD.Rdata")
+#We also correlate scaled connectivity with Gleason score, a metric for prostate cancer severity:
 colnames(Gleason) = c("genename", "entrez", "Q", "GleasonScore")
 
 #Add Gleason score to connectivity_PubMed_PRAD dataframe:
@@ -278,7 +295,7 @@ class(Gleason_connectivity_PubMed_PRAD)
 colnames(Gleason_connectivity_PubMed_PRAD)[colnames(Gleason_connectivity_PubMed_PRAD) == "genename.y"] = "gemename"
 
 #Save the data:
-write.table(Gleason_connectivity_PubMed_PRAD, file = "Scaled connectivity and Gleason score for PRAD using TOM.txt")
+save(Gleason_connectivity_PubMed_PRAD, file = "Data Outputs/Scaled connectivity, PubMed number, and Gleason score for PRAD.RData")
 
 #Perform correlation between scaled connectivity and Gleason score:
 corAndPvalue(Gleason_connectivity_PubMed_PRAD$scaledconnectivity, Gleason_connectivity_PubMed_PRAD$GleasonScore, method = "kendall")
