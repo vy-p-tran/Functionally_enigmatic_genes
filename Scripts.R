@@ -296,24 +296,13 @@ colnames(Gleason_connectivity_PubMed_PRAD)[colnames(Gleason_connectivity_PubMed_
 
 #Save the data:
 save(Gleason_connectivity_PubMed_PRAD, file = "Data Outputs/Scaled connectivity, PubMed number, and Gleason score for PRAD.RData")
+#################################################################################################
 
-#Perform correlation between scaled connectivity and Gleason score:
-corAndPvalue(Gleason_connectivity_PubMed_PRAD$scaledconnectivity, Gleason_connectivity_PubMed_PRAD$GleasonScore, method = "kendall")
-
-#Create a figure for the correlation between scaled connectivity and Gleason score:
-
-plot(data = Gleason_connectivity_PubMed_PRAD, GleasonScore~scaledconnectivity, xlim = c(0, 1.19),
-     xlab = "Scaled connectivity of genes", ylab = "Gleason score", pch=19, main = "PRAD",
-col=ifelse(GleasonScore > 0.302|  scaledconnectivity> 0.8 , "red", "black"))
-with(data = Gleason_connectivity_PubMed_PRAD,
-     text(GleasonScore~scaledconnectivity, pos = 4, cex = 0.8,
-          labels=ifelse(GleasonScore > 0.302|  scaledconnectivity> 0.80, 
-                        Gleason_connectivity_PubMed_PRAD$gemename, "")))
-
-# Calculate Kendall correaltion between Gleason score and number of PubMed publications:
+# Calculate Kendall correlation between Gleason score and number of PubMed publications:
 corAndPvalue(Gleason_connectivity_PubMed_PRAD$PubMed, Gleason_connectivity_PubMed_PRAD$GleasonScore, method = "kendall")
 
 # Plot the correlation between Gleason score and number of PubMed publications:
+pdf(file = "Plots/Figure_3a.pdf")
 plot(data = Gleason_connectivity_PubMed_PRAD, PubMed ~ GleasonScore,
      xlab = "Gleason score", ylab = "Number of PubMed IDs", pch=19, main = "PRAD", xlim = c(-0.3, 0.4),
      col=ifelse(PubMed == max(PubMed)|  GleasonScore> 0.302 , "red", "black"))
@@ -321,6 +310,8 @@ with(data = Gleason_connectivity_PubMed_PRAD,
      text(PubMed ~GleasonScore, pos = 4, cex = 0.8,
           labels=ifelse(PubMed == max(PubMed)|  GleasonScore > 0.302, 
                         Gleason_connectivity_PubMed_PRAD$gemename, "")))
+dev.off()
+#################################################################################################
 
 ## 3. WGCNA Analysis for colon adenocarcinoma (COAD) data set
 
@@ -328,27 +319,23 @@ with(data = Gleason_connectivity_PubMed_PRAD,
 COAD = COAD_DATA
 row.names(COAD) = COAD_DATA[,1]; colnames(COAD) = COAD_DATA[1,]
 COAD = COAD[-c(1,2),-1]
-```
 
-```{r}
 #Convert data frame to numeric matrix:
 COAD1 = as.matrix(sapply(COAD, as.numeric))  
 colnames(COAD1) = colnames(COAD)
 row.names(COAD1) = row.names(COAD)
 class(COAD1)
 is.numeric(COAD1)
-```
 
-```{r}
 #Transpose matrix and filter for 10,000 most variant genes:
 COADdata = t(COAD1[order(apply(COAD1,1,mad), decreasing = T)[1:10000],])
 
 #Check if COADdata have many missing values:
 gsg = goodSamplesGenes(COADdata, verbose = 3)
 gsg$allOK
-```
-The command returns "TRUE", so all genes have passed the cuts.
-```{r}
+
+#The command returns "TRUE", so all genes have passed the cuts.
+
 # Re-cluster the samples (in contrast to clustering genes that will come later) to see if there are any obvious outliers:
 sampleTree = hclust(dist(COADdata), method = "average")
 # Plot the sample tree:
@@ -569,81 +556,75 @@ plot(data = aggressiveness_connectivity_PubMed_COAD, PubMed ~ aggressiveness,
 with(data = aggressiveness_connectivity_PubMed_COAD, text(PubMed ~ aggressiveness, pos = 4, cex = 0.80,
                                                    labels=ifelse(aggressiveness > 11|PubMed == max(PubMed), 
                                                                  as.character(aggressiveness_connectivity_PubMed_COAD$genename), "")))
-```
+#################################################################################################
 
-```{r}
 ## 4. WGCNA Analysis for glioma (GBMLGG) data set
-#Load the data:
-load(file = "GBMLGG.Rfile")
-```
 
-```{r}
 #Remove uninformative data:
 GBMLGG = GBMLGG_DATA
 row.names(GBMLGG) = GBMLGG_DATA[,1]; colnames(GBMLGG) = GBMLGG_DATA[1,]
 GBMLGG = GBMLGG[-c(1,2),-1]
-```
 
-```{r}
 #Convert data frame to numeric matrix:
 GBMLGG1 = as.matrix(sapply(GBMLGG, as.numeric))  
 colnames(GBMLGG1) = colnames(GBMLGG)
 row.names(GBMLGG1) = row.names(GBMLGG)
 class(GBMLGG1)
 is.numeric(GBMLGG1)
-```
 
-```{r}
 #Transpose matrix and filter for 10,000 most variant genes:
 GBMLGGdata = t(GBMLGG1[order(apply(GBMLGG1,1,mad), decreasing = T)[1:10000],])
 
 #Check if GBMLGGdata have many missing values:
 gsg = goodSamplesGenes(GBMLGGdata, verbose = 3)
 gsg$allOK
-```
-The command returns "TRUE", so all genes have passed the cuts.
-```{r}
+
+#The command returns "TRUE", so all genes have passed the cuts.
+#################################################################################################
+
 # Re-cluster the samples (in contrast to clustering genes that will come later) to see if there are any obvious outliers:
 sampleTree = hclust(dist(GBMLGGdata), method = "average")
 # Plot the sample tree:
 sizeGrWindow(12,9)
-#pdf(file = "Plots/sampleClustering.pdf", width = 12, height = 9);
+pdf(file = "Plots/Sample clustering to detect outliers_GBMLGG.pdf", width = 12, height = 9);
 par(cex = 0.6);
 par(mar = c(0,4,2,0))
 plot(sampleTree, main = "Sample clustering to detect outliers", sub="", xlab="", cex.lab = 1.5,
      cex.axis = 1.5, cex.main = 2)
-```
-It appears there is 1 outlier. Outlier removal: 
-```{r}
+dev.off()
+#################################################################################################
+
+#It appears there is 1 outlier. Outlier removal: 
+
 # Plot a line to show the cut
 sizeGrWindow(12,9)
-#pdf(file = "Plots/sampleClustering.pdf", width = 12, height = 9);
+pdf(file = "Plots/Sample clustering to detect outliers_GBMLGG_outlier removal.pdf", width = 12, height = 9);
 par(cex = 0.6);
 par(mar = c(0,4,2,0))
 plot(sampleTree, main = "Sample clustering to detect outliers", sub="", xlab="", cex.lab = 1.5,
      cex.axis = 1.5, cex.main = 2)
-abline(h = 2500000, col = "red");
-```
+abline(h = 2500000, col = "red")
 
-```{r}
+dev.off()
+
 # Determine cluster under the line
 clust = cutreeStatic(sampleTree, cutHeight = 2500000, minSize = 10)
 table(clust)
-```
-
-```{r}
 # Clust 1 contains the samples we want to keep
 keepSamples = (clust==1)
 GBMLGGdata1 = GBMLGGdata[keepSamples, ]
-```
-Now the GBMLGGdata1 matrix is ready for WGCNA analysis.
-```{r}
+
+# Now the GBMLGGdata1 matrix is ready for WGCNA analysis.
+#################################################################################################
+
 # Choose a set of soft-thresholding powers
 powers = c(c(1:10), seq(from = 12, to=20, by=2))
 # Call the network topology analysis function
 sft = pickSoftThreshold(GBMLGGdata1, powerVector = powers, verbose = 5)
+
 # Plot the results:
 sizeGrWindow(9, 5)
+pdf(file = "Plots/Soft-thresholding pwoer for GBMLGG.pdf")
 par(mfrow = c(1,2));
 cex1 = 0.9;
 # Scale-free topology fit index as a function of the soft-thresholding power
@@ -660,9 +641,12 @@ plot(sft$fitIndices[,1], sft$fitIndices[,5],
      xlab="Soft Threshold (power)",ylab="Mean Connectivity", type="n",
      main = paste("Mean connectivity"))
 text(sft$fitIndices[,1], sft$fitIndices[,5], labels=powers, cex=cex1,col="red")
-```
-Based on the scale-free topology graph, the soft-thresholding power of 6 was chosen.
-```{r}
+
+dev.off()
+
+# Based on the scale-free topology graph, the soft-thresholding power of 6 was chosen.
+#################################################################################################
+
 # Constructing the gene network and identifying modules:
 net_GBMLGG = blockwiseModules(GBMLGGdata1, power = 6,
                        TOMType = "unsigned", minModuleSize = 30,
@@ -671,34 +655,31 @@ net_GBMLGG = blockwiseModules(GBMLGGdata1, power = 6,
                        saveTOMs = TRUE,
                        saveTOMFileBase = "GBMLGGTOM",
                        verbose = 3)
-```
 
-```{r}
 # To see how many modules were identified and what the module sizes are, one can use table(net$colors).
 table(net_GBMLGG$colors)
-```
-Now we can visualize the modules.
-```{r}
+
+#Now we can visualize the modules.
+
 # Convert labels to colors for plotting
 mergedColors_GBMLGG = labels2colors(net_GBMLGG$colors)
 # Plot the dendrogram and the module colors underneath
+pdf(file = "Plots/Cluster dendrogram for GBMLGG.pdf")
 plotDendroAndColors(net_GBMLGG$dendrograms[[1]], mergedColors_GBMLGG[net_GBMLGG$blockGenes[[1]]],
                     "Module colors",
                     dendroLabels = FALSE, hang = 0.03,
                     addGuide = TRUE, guideHang = 0.05, main = "Cluster dendrogram for GBMLGG")
-```
+dev.off()
+#################################################################################################
 
-```{r}
 # We now save the module assignment and module eigengene information necessary for subsequent analysis:
 moduleLabels_GBMLGG = net_GBMLGG$colors
 moduleColors_GBMLGG = labels2colors(net_GBMLGG$colors)
 MEs_GBMLGG = net_GBMLGG$MEs;
 geneTree_GBMLGG = net_GBMLGG$dendrograms[[1]];
 save(MEs_GBMLGG, moduleLabels_GBMLGG, moduleColors_GBMLGG, geneTree_GBMLGG,
-     file = "GBMLGG_network_modulecolor_and_label.RData")
-```
+     file = "Data Outputs/GBMLGG_network_modulecolor_and_label.RData")
 
-```{r}
 # Define numbers of genes and samples
 nGenes = ncol(GBMLGGdata1)
 nSamples = nrow(GBMLGGdata1)
@@ -716,9 +697,7 @@ MMPvalue_GBMLGG = as.data.frame(corPvalueStudent(as.matrix(geneModuleMembership_
 
 names(geneModuleMembership_GBMLGG) = paste("MM", modNames_GBMLGG, sep="");
 names(MMPvalue_GBMLGG) = paste("p.MM", modNames_GBMLGG, sep="");
-```
 
-```{r}
 #We now create a data frame holding the following information for all genes: gene names, 
 #module color,and module membership and p-values in all modules: 
 
@@ -733,10 +712,11 @@ geneOrder_GBMLGG = order(geneInfoGBMLGG$moduleColor)
 geneInfoGBMLGG_1 = geneInfoGBMLGG[geneOrder_GBMLGG, ]
 
 # Save the data frame into a text-format spreadsheet:
-write.csv(geneInfoGBMLGG_1, file = "GBMLGG_geneMM.csv")
-```
-Now we calculate scaled connectivity of genes in the GBMLGG network:
-```{r}
+write.csv(geneInfoGBMLGG_1, file = "Data Outputs/GBMLGG_geneMM.csv")
+#################################################################################################
+
+# Now we calculate scaled connectivity of genes in the GBMLGG network:
+
 #Create a TOM matrix:
 tom_GBMLGG = TOMsimilarityFromExpr(GBMLGGdata1)
 fun = fundamentalNetworkConcepts(tom_GBMLGG, GS = NULL) #Take > 30 minutes to compute
@@ -744,9 +724,9 @@ fun = fundamentalNetworkConcepts(tom_GBMLGG, GS = NULL) #Take > 30 minutes to co
 # We want the scaled connectivity k = connectivity/max(connectivity), which is an indication of hub gene significance.
 connectivity_GBMLGG = as.data.frame(fun$ScaledConnectivity)
 row.names(connectivity_GBMLGG) = colnames(GBMLGGdata1) 
-```
-To visualize correlation between scaled connectivity of genes and number of publications, we merge the two variables into one dataframe. 
-```{r}
+
+#To visualize correlation between scaled connectivity of genes and number of publications, we merge the two variables into one dataframe. 
+
 #Separate the row name of the connectivity_COAD dataframe into two columns (official gene symbol and Entrez ID) before merging with PubMed info:
 connectivity_GBMLGG = tibble::rownames_to_column(connectivity_GBMLGG, "gene") #To make the rowname column into a new column.
 
@@ -763,16 +743,16 @@ connectivity_PubMed_GBMLGG = connectivity_PubMed_GBMLGG[, -4]
 colnames(connectivity_PubMed_GBMLGG) = c("entrez", "genename", "PubMed", "scaledconnectivity")
 
 #Save the data:
-write.table(connectivity_PubMed_GBMLGG, file = "Scaled connectivity and PubMed ID for GBMLGG.csv")
-```
-Now we calculate correlation between scaled connectivity and PubMed publications for GBMLGG genes:
-```{r}
+write.table(connectivity_PubMed_GBMLGG, file = "Data Outputs/Scaled connectivity and PubMed ID for GBMLGG.csv")
+#################################################################################################
+
+#Now we calculate correlation between scaled connectivity and PubMed publications for GBMLGG genes:
+
 #Calcualte Kendall correlation between scaled connectivity and PubMed number:
 corAndPvalue(connectivity_PubMed_GBMLGG$PubMed, connectivity_PubMed_GBMLGG$scaledconnectivity, method = "kendall")
-```
 
-```{r}
 #Plot a scatterplot to show the correlation between scaled connectivity and publications:
+pdf(file = "Plots/Figure_2c.pdf")
 plot(data = connectivity_PubMed_GBMLGG, PubMed ~ scaledconnectivity, xlim = c(0, 1.19),
      xlab = "Scaled connectivity of genes", ylab = "Number of PubMed IDs", pch=19, main = "GBMLGG",
      col=ifelse(PubMed > 7000 | scaledconnectivity == max(scaledconnectivity), "red", "black"))
@@ -780,51 +760,23 @@ with(data = connectivity_PubMed_GBMLGG,
      text(PubMed ~ scaledconnectivity, pos = 4, cex = 0.80,
           labels=ifelse(PubMed > 7000 | scaledconnectivity == max(scaledconnectivity), 
                         as.character(connectivity_PubMed_GBMLGG$genename), "")))
-```
-We also correlate scaled connectivity with Cindex score:
-```{r}
-#Load aggressiveness score data:
-load(file = "GBMLGG.Cindex.Rdata")
-colnames(GBMLGG.Cindex)[colnames(GBMLGG.Cindex) == "genesymbol"] = "genename"
-```
+dev.off()
+#################################################################################################
 
-```{r}
-#Add C-index score to connectivity_PubMed_GBMLGG dataframe:
-Cindex_connectivity_PubMed_GBMLGG = merge(connectivity_PubMed_GBMLGG, GBMLGG.Cindex, by = "entrez")
-Cindex_connectivity_PubMed_GBMLGG = Cindex_connectivity_PubMed_GBMLGG[,-5]
-colnames(Cindex_connectivity_PubMed_GBMLGG)[colnames(Cindex_connectivity_PubMed_GBMLGG) == "genename.x"] = "genename"
-dim(Cindex_connectivity_PubMed_GBMLGG)
-#Save the data:
-write.table(Cindex_connectivity_PubMed_GBMLGG, file = "Scaled connectivity, PubMed IDs, and Cindex score for GBMLGG.csv")
-```
+#Calculate correlation between Cindex score and number publications:
 
-```{r}
-#Perform correlation between scaled connectivity and aggressiveness score:
-corAndPvalue(Cindex_connectivity_PubMed_GBMLGG$scaledconnectivity, Cindex_connectivity_PubMed_GBMLGG$C_index, method = "kendall")
-```
-Create a figure for the correlation between scaled connectivity and C-index score:
-```{r}
-plot(data = Cindex_connectivity_PubMed_GBMLGG, C_index ~ scaledconnectivity, xlim = c(0, 1.19),
-     xlab = "Scaled connectivity of genes", ylab = "C-index score", pch=19, main = "GBMLGG",
-     col=ifelse(C_index > 0.83|scaledconnectivity > 0.7, "red", "black"))
-with(data = Cindex_connectivity_PubMed_GBMLGG, text(C_index ~ scaledconnectivity, pos = 4, cex = 0.80,
-                                           labels=ifelse(C_index > 0.83|scaledconnectivity > 0.7, 
-                                                        as.character(Cindex_connectivity_PubMed_GBMLGG$genename), "")))
-```
-Calculate correlation between Cindex score and number publications:
-```{r}
 #Kendall correlation between Cindex score and number of PubMed publications:
 corAndPvalue(Cindex_connectivity_PubMed_GBMLGG$PubMed, Cindex_connectivity_PubMed_GBMLGG$C_index,method = "kendall")
-```
 
-```{r}
 # Create the corrrelation figure for Cindex score vs. number of PubMed publications:
+pdf(file = "Plots/Figure_3c.pdf")
 plot(data = (Cindex_connectivity_PubMed_GBMLGG, PubMed ~ Cindex, xlab = "C-index score", ylab = "Number of PubMed IDs", pch=19, main = "GBMLGG", xlim = c(-15, 15),col=ifelse(Cindex > 0.83|PubMed == max(PubMed), "red", "black"))
 with(data = Cindex_connectivity_PubMed_GBMLGG, text(PubMed ~ Cindex, pos = 4, cex = 0.80,
-    labels=ifelse(Cindex > 0.83|PubMed == max(PubMed), as.character(Cindex_connectivity_PubMed_GBMLGG$genename),"")))
-```
+    labels=ifelse(Cindex > 0.83|PubMed == max(PubMed), as.character(Cindex_connectivity_PubMed_GBMLGG$genename),""))
 
-```{r}
+dev.off()
+#################################################################################################
+
 ## 5. Examine the distribution of underannotated genes in modules:
 
 #Load the previously created gene module membership data for PRAD, COAD, and GBMLGG:
@@ -933,15 +885,13 @@ annotation_bymodule = merge(allannotation_bymodule, underannotation_bymodule, by
 colnames(annotation_bymodule) = c("modulecolor", "allgenes", "underannotated_genes")
 head(annotation_bymodule)
 write.table(annotation_bymodule, file = "Annotation by module GBMLGG.txt")
-```
 
-```{r}
 ## 6. Extract modules for network visualization in Cytoscape:
 
 # a. Extract GBMLGG "saddlebrown" module:
 
 # Select modules
-modules = c("saddlebrown")
+modules = c("purple")
 
 # Select module probes
 Genes = colnames(GBMLGGdata1)
