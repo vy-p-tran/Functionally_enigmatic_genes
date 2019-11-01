@@ -31,6 +31,8 @@ load(file = "Data Inputs/GBMLGG.Rfile") #Loaded as GBMLGG_DATA
 load(file = "Data Inputs/PubMed_ID_for_all_TCGA_genes.Rdata") #Loaded as PubMed
 load(file = "Data Inputs/Prognostic_unfavorable_genes.Rdata") #Loaded as unfavorable_genes
 load(file = "Data Inputs/Gleasonscore_PRAD.Rdata") #Loaded as Gleason
+load(file = "Data Inputs/Aggressiveness score_COAD.Rdata")
+load(file = "Data Inputs/Cindex_GBMLGG.Rdata")
 #################################################################################################
 
 ## 1. Create Figure 1 for PubMed distribution of prognostic unfavorable genes:
@@ -244,7 +246,7 @@ fun = fundamentalNetworkConcepts(tom_PRAD, GS = NULL) #May take > 30 minutes to 
 #We want the scaled connectivity k = connectivity/max(connectivity), which is an indication of hub gene significance.
 connectivity_PRAD = as.data.frame(fun$ScaledConnectivity)
 row.names(connectivity_PRAD) = colnames(PRADdata)
- 
+
 #Next step is to merge the gene significance data frame with TCGA PubMed ID data.
 
 #First, we separate the row name into two columns (official gene symbol and Entrez ID) before merging with PubMed info:
@@ -335,31 +337,38 @@ gsg = goodSamplesGenes(COADdata, verbose = 3)
 gsg$allOK
 
 #The command returns "TRUE", so all genes have passed the cuts.
+#################################################################################################
 
 # Re-cluster the samples (in contrast to clustering genes that will come later) to see if there are any obvious outliers:
 sampleTree = hclust(dist(COADdata), method = "average")
 # Plot the sample tree:
 sizeGrWindow(12,9)
-#pdf(file = "Plots/sampleClustering.pdf", width = 12, height = 9);
+
+pdf(file = "Plots/Sample clustering to detect outliers_COAD.pdf", width = 12, height = 9);
 par(cex = 0.6);
 par(mar = c(0,4,2,0))
 plot(sampleTree, main = "Sample clustering to detect outliers", sub="", xlab="", cex.lab = 1.5,
      cex.axis = 1.5, cex.main = 2)
-```
-It appears there is 1 outlier. Outlier removal: 
-```{r}
+
+dev.off()
+# It appears there is 1 outlier.
+#################################################################################################
+
+#Outlier removal: 
+
 # Plot a line to show the cut
 
 sizeGrWindow(12,9)
 #pdf(file = "Plots/sampleClustering.pdf", width = 12, height = 9);
 par(cex = 0.6);
 par(mar = c(0,4,2,0))
+pdf(file = "Plots/Sample clustering to detect outliers_outlier removal_COAD.pdf")
 plot(sampleTree, main = "Sample clustering to detect outliers", sub="", xlab="", cex.lab = 1.5,
      cex.axis = 1.5, cex.main = 2)
 abline(h = 1500000, col = "red");
-```
 
-```{r}
+dev.off()
+
 # Determine cluster under the line
 clust = cutreeStatic(sampleTree, cutHeight = 1500000, minSize = 10)
 table(clust)
@@ -368,9 +377,10 @@ keepSamples = (clust==1)
 COADdata1 = COADdata[keepSamples, ]
 nGenes = ncol(COADdata1)
 nSamples = nrow(COADdata1)
-```
-Now the COADdata1 matrix is ready for WGCNA analysis.
-```{r}
+
+#Now the COADdata1 matrix is ready for WGCNA analysis.
+#################################################################################################
+
 # Choose a set of soft-thresholding powers
 powers = c(c(1:10), seq(from = 12, to=20, by=2))
 # Call the network topology analysis function
@@ -380,12 +390,15 @@ sizeGrWindow(9, 5)
 par(mfrow = c(1,2));
 cex1 = 0.9;
 # Scale-free topology fit index as a function of the soft-thresholding power
+pdf(file = "Plots/Soft threshold power for COAD.pdf")
 plot(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
      xlab="Soft Threshold (power)",ylab="Scale Free Topology Model Fit,signed R^2",type="n",
      main = paste("Scale independence"));
 text(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
      labels=powers,cex=cex1,col="red");
 
+dev.off()
+#################################################################################################
 # this line corresponds to using an R^2 cut-off of h
 abline(h=0.90,col="red")
 # Mean connectivity as a function of the soft-thresholding power
@@ -752,7 +765,7 @@ write.table(connectivity_PubMed_GBMLGG, file = "Data Outputs/Scaled connectivity
 corAndPvalue(connectivity_PubMed_GBMLGG$PubMed, connectivity_PubMed_GBMLGG$scaledconnectivity, method = "kendall")
 
 #Plot a scatterplot to show the correlation between scaled connectivity and publications:
-pdf(file = "Plots/Figure_2c.pdf")
+pdf(file = "Plots/Figure_3a.pdf")
 plot(data = connectivity_PubMed_GBMLGG, PubMed ~ scaledconnectivity, xlim = c(0, 1.19),
      xlab = "Scaled connectivity of genes", ylab = "Number of PubMed IDs", pch=19, main = "GBMLGG",
      col=ifelse(PubMed > 7000 | scaledconnectivity == max(scaledconnectivity), "red", "black"))
@@ -763,18 +776,36 @@ with(data = connectivity_PubMed_GBMLGG,
 dev.off()
 #################################################################################################
 
-#Calculate correlation between Cindex score and number publications:
+#We also correlate scaled connectivity with C index score, a metric for glioma severity:
+colnames(GBMLGG.Cindex) = c("genename", "entrez", "Q", "C_index")
 
-#Kendall correlation between Cindex score and number of PubMed publications:
-corAndPvalue(Cindex_connectivity_PubMed_GBMLGG$PubMed, Cindex_connectivity_PubMed_GBMLGG$C_index,method = "kendall")
+#Add Cindex score to connectivity_PubMed_GBMLGG dataframe:
+Cindex_connectivity_PubMed_GBMLGG = merge(connectivity_PubMed_GBMLGG, GBMLGG.Cindex, by = "entrez")
+Cindex_connectivity_PubMed_GBMLGG = Cindex_connectivity_PubMed_GBMLGG[, -c(2)]
+dim(Cindex_connectivity_PubMed_GBMLGG)
+class(Cindex_connectivity_PubMed_GBMLGG)
+colnames(Cindex_connectivity_PubMed_GBMLGG)[colnames(Cindex_connectivity_PubMed_GBMLGG) == "genename.y"] = "gemename"
 
+#Save the data:
+save(Cindex_connectivity_PubMed_GBMLGG, file = "Data Outputs/Scaled connectivity, PubMed number, and Cindex score for GBMLGG.RData")
+#################################################################################################
+
+# Calculate Kendall correlation between Cindex score and number of PubMed publications:
+corAndPvalue(Cindex_connectivity_PubMed_GBMLGG$PubMed, Cindex_connectivity_PubMed_GBMLGG$C_index, method = "kendall")
+
+# Plot the correlation between Cindex score and number of PubMed publications:
 # Create the corrrelation figure for Cindex score vs. number of PubMed publications:
 pdf(file = "Plots/Figure_3c.pdf")
-plot(data = (Cindex_connectivity_PubMed_GBMLGG, PubMed ~ Cindex, xlab = "C-index score", ylab = "Number of PubMed IDs", pch=19, main = "GBMLGG", xlim = c(-15, 15),col=ifelse(Cindex > 0.83|PubMed == max(PubMed), "red", "black"))
-with(data = Cindex_connectivity_PubMed_GBMLGG, text(PubMed ~ Cindex, pos = 4, cex = 0.80,
-    labels=ifelse(Cindex > 0.83|PubMed == max(PubMed), as.character(Cindex_connectivity_PubMed_GBMLGG$genename),""))
 
+plot(data = Cindex_connectivity_PubMed_GBMLGG, PubMed ~ C_index, xlab = "C-index score", 
+     ylab = "Number of PubMed IDs", pch=19, main = "GBMLGG",
+     col=ifelse(C_index > 0.83|PubMed == max(PubMed), "red", "black"))
+     with(data = Cindex_connectivity_PubMed_GBMLGG, text(PubMed ~ C_index, pos = 4, cex = 0.80,
+    labels=ifelse(C_index > 0.83|PubMed == max(PubMed), 
+                  as.character(Cindex_connectivity_PubMed_GBMLGG$genename),"")))
+          
 dev.off()
+
 #################################################################################################
 
 ## 5. Examine the distribution of underannotated genes in modules:
