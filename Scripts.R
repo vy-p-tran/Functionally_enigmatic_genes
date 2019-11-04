@@ -44,24 +44,24 @@ colnames(Pubmed_unfavorable)
 
 #Create Figure 1a:
 
-#Open a pdf file
-
-jpeg("Plots/Figure_1.jpeg", width = 1000, height = 1000, res = 300) 
+#Open a jpeg file
+jpeg("Plots/Figure_1.jpeg", width = 3200, height = 3200, res = 300) 
 
 layout(matrix(c(1,1,2,3,4,5), 3, 2, byrow = TRUE),
-       widths=c(1,1), heights=c(1.2,1,1))
+       widths=c(1.5,1.5), heights=c(1.3,1,1))
 
 
 #Plot Figure 1a:
 density_unfavorable = density(Pubmed_unfavorable$PubMed)
 gap.plot(x = density_unfavorable$x, y = density_unfavorable$y, gap = c(250, 7650), gap.axis = "x", type = "l", xlim = c(0, 7750),
-         ylab = "Density", xlab = "Number of PubMed publications", lwd = 1.9, cex.lab = 1.3, cex.axis = 1.3,
+         ylab = "Density", xlab = "Number of PubMed publications", lwd = 1.9, cex.lab = 1.5, cex.axis = 1.5,
          xtics = c(0, 50, 100, 150, 300, 6500, 7700))
 axis.break(1, 250, breakcol="white", style="gap") #to cover the lines created by the gap.plot fucntion
 axis.break(axis = 1, 250, style = "slash") #to add a pair of slash markers on the x axis
 axis.break(axis = 3, 250, style = "slash")
 abline(v = 50, col = "red")
-text(x = 50, y = 0.015,"cut-off",pos=4, col = "red")
+text(x = 50, y = 0.015,"cut-off",pos=4, col = "red", cex = 1.5)
+title(main ="a", adj=0, line=2, font=2, cex.main = 2)
 
 
 # Plot figures 1b-e:
@@ -69,27 +69,32 @@ slices_enigmatic_autosomal = c(2.5, 7.4, 90.1)
 lbls = c("Autosomal dominant", "Autosomal recessive", "Other")
 lbls = paste(lbls, slices_enigmatic_autosomal) # add percents to labels 
 lbls = paste(lbls,"%",sep="") # add % to labels 
-pie(slices_enigmatic_autosomal, labels = lbls, cex = 1.3, main="Functionally enigmatic genes", col = c("darkgoldenrod1", "cornflowerblue", "darkgray"))
+pie(slices_enigmatic_autosomal, radius = 0.84, labels = lbls, cex = 1.3, main = "Functionally enigmatic genes",
+    cex.main = 1.5, col = c("darkgoldenrod1", "cornflowerblue", "darkgray"))
+title(main ="b", adj=0, line=2, font=2, cex.main = 2)
 
 slices_wellstudied_autosomal = c(14.7,15.0, 70.3)
 lbls = c("Autosomal dominant", "Autosomal recessive", "Other")
 lbls = paste(lbls, slices_wellstudied_autosomal) # add percents to labels 
 lbls = paste(lbls,"%",sep="") # add % to labels 
-pie(slices_wellstudied_autosomal, labels = lbls, cex = 1.3, main="Well-studied genes", col = c("darkgoldenrod1", "cornflowerblue", "darkgray"))
+pie(slices_wellstudied_autosomal, radius = 0.84,labels = lbls, cex = 1.3, cex.main = 1.5, main="Well-studied genes", col = c("darkgoldenrod1", "cornflowerblue", "darkgray"))
+title(main ="c", adj=0, line=2, font=2, cex.main = 2)
 
 slices_enigmatic_species = c(753,102, 3507)
 lbls = c("Eukaryote", "Primate", "Other")
 pct = round(slices_enigmatic_species/sum(slices_enigmatic_species)*100, digits = 1)
 lbls = paste(lbls, pct) # add percents to labels 
 lbls = paste(lbls,"%",sep="") # add % to labels 
-pie(slices_enigmatic_species, labels = lbls, cex = 1.3, col = c( "aquamarine4", "hotpink", "darkgray"))
+pie(slices_enigmatic_species, radius = 0.84, labels = lbls, cex = 1.3, cex.main = 1.5, main = "Functionally enigmatic genes", col = c( "aquamarine4", "hotpink", "darkgray"))
+title(main ="d", adj=0, line=2, font=2, cex.main = 2)
 
 slices_wellstudied_species = c(555,19,1607)
 lbls = c("Eukaryote", "Primate", "Other")
 pct = round(slices_wellstudied_species/sum(slices_wellstudied_species)*100, digits = 1)
 lbls = paste(lbls, pct) # add percents to labels 
 lbls = paste(lbls,"%",sep="") # add % to labels 
-pie(slices_wellstudied_species, cex = 1.3, labels = lbls, col = c("aquamarine4","hotpink", "darkgray"))
+pie(slices_wellstudied_species, radius = 0.84, cex = 1.3, cex.main = 1.5, main="Well-studied genes", labels = lbls, col = c("aquamarine4","hotpink", "darkgray"))
+title(main ="e", adj=0, line=2, font=2, cex.main = 2)
 
 dev.off()
 #################################################################################################
@@ -400,6 +405,7 @@ text(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
 
 dev.off()
 #################################################################################################
+
 # this line corresponds to using an R^2 cut-off of h
 abline(h=0.90,col="red")
 # Mean connectivity as a function of the soft-thresholding power
@@ -407,9 +413,9 @@ plot(sft$fitIndices[,1], sft$fitIndices[,5],
      xlab="Soft Threshold (power)",ylab="Mean Connectivity", type="n",
      main = paste("Mean connectivity"))
 text(sft$fitIndices[,1], sft$fitIndices[,5], labels=powers, cex=cex1,col="red")
-```
-Based on the scale-free topology graph, the soft-thresholding power of 6 was chosen.
-```{r}
+
+# Based on the scale-free topology graph, the soft-thresholding power of 6 was chosen.
+
 # Constructing the gene network and identifying modules:
 net_COAD = blockwiseModules(COADdata1, power = 6,
                        TOMType = "unsigned", minModuleSize = 30,
@@ -418,14 +424,13 @@ net_COAD = blockwiseModules(COADdata1, power = 6,
                        saveTOMs = TRUE,
                        saveTOMFileBase = "COADTOM",
                        verbose = 3)
-```
 
-```{R}
 # To see how many modules were identified and what the module sizes are, one can use table(net$colors).
 table(net_COAD$colors)
-```
-Now we can visualize the modules.
-```{r}
+#################################################################################################
+
+# Now we can visualize the modules.
+
 # Convert labels to colors for plotting
 mergedColors_COAD = labels2colors(net_COAD$colors)
 # Plot the dendrogram and the module colors underneath
@@ -433,9 +438,7 @@ plotDendroAndColors(net_COAD$dendrograms[[1]], mergedColors_COAD[net_COAD$blockG
                     "Module colors",
                     dendroLabels = FALSE, hang = 0.03,
                     addGuide = TRUE, guideHang = 0.05, main = "Cluster dendrogram for COAD")
-```
 
-```{r}
 # We now save the module assignment and module eigengene information necessary for subsequent analysis:
 moduleLabels_COAD = net_COAD$colors
 moduleColors_COAD = labels2colors(net_COAD$colors)
@@ -443,9 +446,7 @@ MEs_COAD = net_COAD$MEs;
 geneTree_COAD = net_COAD$dendrograms[[1]];
 save(MEs_COAD, moduleLabels_COAD, moduleColors_COAD, geneTree_COAD,
      file = "COADnetwork_modulecolor_and_label.RData")
-```
 
-```{r}
 # Define numbers of genes and samples
 nGenes = ncol(COADdata1)
 nSamples = nrow(COADdata1)
@@ -463,9 +464,8 @@ MMPvalue_COAD = as.data.frame(corPvalueStudent(as.matrix(geneModuleMembership_CO
 
 names(geneModuleMembership_COAD) = paste("MM", modNames_COAD, sep="");
 names(MMPvalue_COAD) = paste("p.MM", modNames_COAD, sep="");
-```
+#################################################################################################
 
-```{r}
 #We now create a data frame holding the following information for all genes: gene names, 
 #module color,and module membership and p-values in all modules: 
 
@@ -479,11 +479,12 @@ geneInfoCOAD = data.frame(Genename = colnames(COADdata1),
 geneOrder_COAD = order(geneInfoCOAD$moduleColor)
 geneInfoCOAD_1 = geneInfoCOAD[geneOrder_COAD, ]
 
-# Save the data frame into a text-format spreadsheet:
-write.csv(geneInfoCOAD_1, file = "COAD_geneMM.csv")
-```
-Now we calculate scaled connectivity of genes in the COAD network:
-```{r}
+save(geneInfoCOAD_1, file = "Data Outputs/COAD_geneMM.Rfile")
+#################################################################################################
+
+
+# Now we calculate scaled connectivity of genes in the COAD network:
+
 #Create a TOM matrix:
 tom_COAD = TOMsimilarityFromExpr(COADdata1)
 fun = fundamentalNetworkConcepts(tom_COAD, GS = NULL) #Take > 30 minutes to compute
@@ -491,9 +492,9 @@ fun = fundamentalNetworkConcepts(tom_COAD, GS = NULL) #Take > 30 minutes to comp
 # We want the scaled connectivity k = connectivity/max(connectivity), which is an indication of hub gene significance.
 connectivity_COAD = as.data.frame(fun$ScaledConnectivity)
 row.names(connectivity_COAD) = colnames(COADdata1) 
-```
-To visualize correlation between scaled connectivity of genes and number of publications, we merge the two variables into one dataframe. 
-```{r}
+
+#To visualize correlation between scaled connectivity of genes and number of publications, we merge the two variables into one dataframe. 
+
 #Separate the row name of the connectivity_COAD dataframe into two columns (official gene symbol and Entrez ID) before merging with PubMed info:
 connectivity_COAD = tibble::rownames_to_column(connectivity_COAD, "gene") #To make the rowname column into a new column.
 
@@ -510,15 +511,13 @@ connectivity_PubMed_COAD = connectivity_PubMed_COAD[, -4]
 colnames(connectivity_PubMed_COAD) = c("entrez", "genename", "PubMed", "scaledconnectivity")
 
 #Save the data:
-write.table(connectivity_PubMed_COAD, file = "Scaled connectivity and PubMed ID for COAD.txt")
-```
-Now we calculate correlation between scaled connectivity and PubMed publications for PRAD genes:
-```{r}
+save(connectivity_PubMed_COAD, file = "Data Outputs/Scaled connectivity and PubMed ID for COAD.Rfile")
+
+#Now we calculate correlation between scaled connectivity and PubMed publications for PRAD genes:
+
 #Calcualte Kendall correlation between scaled connectivity and PubMed number:
 corAndPvalue(connectivity_PubMed_COAD$PubMed, connectivity_PubMed_COAD$scaledconnectivity, method = "kendall")
-```
 
-```{r}
 #Plot a scatterplot to show the correlation between scaled connectivity and publications:
 plot(data = connectivity_PubMed_COAD, PubMed ~ scaledconnectivity, xlim = c(0, 1.19),
      xlab = "Scaled connectivity of genes", ylab = "Number of PubMed IDs", pch=19, main = "COAD",
@@ -527,42 +526,36 @@ with(data = connectivity_PubMed_COAD,
      text(PubMed ~ scaledconnectivity, pos = 4, cex = 0.80,
           labels=ifelse(PubMed > 7000 | scaledconnectivity == max(scaledconnectivity), 
                         as.character(connectivity_PubMed_COAD$genename), "")))
-```
-We also correlate scaled connectivity with aggressiveness score:
-```{r}
+
+# We also correlate scaled connectivity with aggressiveness score:
+
 #Load aggressiveness score data:
 load(file = "COAD aggressiveness.Rdata")
 aggressiveness_COAD = as.data.frame(COAD.aggressiveness[, c(3,7)])
-```
 
-```{r}
 #Add aggressiveness score to connectivity_PubMed_COAD dataframe:
 aggressiveness_connectivity_PubMed_COAD = merge(connectivity_PubMed_COAD, aggressiveness_COAD, by = "genename")
 dim(aggressiveness_connectivity_PubMed_COAD)
 #Save the data:
 write.table(aggressiveness_connectivity_PubMed_COAD, file = "Scaled connectivity, PubMed IDs, and aggressivenss score for COAD.csv")
-```
 
-```{r}
 #Perform correlation between scaled connectivity and aggressiveness score:
 corAndPvalue(aggressiveness_connectivity_PubMed_COAD$scaledconnectivity, aggressiveness_connectivity_PubMed_COAD$aggressiveness, method = "kendall")
-```
-Create a figure for the correlation between scaled connectivity and aggressiveness score:
-```{r}
+
+# Create a figure for the correlation between scaled connectivity and aggressiveness score:
+
 plot(data = aggressiveness_connectivity_PubMed_COAD, aggressiveness ~ scaledconnectivity, xlim = c(0, 1.19),
      xlab = "Scaled connectivity of genes", ylab = "Aggressiveness score", pch=19, main = "COAD",
      col=ifelse(aggressiveness > 11|scaledconnectivity == max(scaledconnectivity), "red", "black"))
 with(data = aggressiveness_connectivity_PubMed_COAD, text(aggressiveness ~ scaledconnectivity, pos = 4, cex = 0.80,
                                            labels=ifelse(aggressiveness > 11|scaledconnectivity == max(scaledconnectivity), 
                                                         as.character(aggressiveness_connectivity_PubMed_COAD$genename), "")))
-```
-Calculate correlation between aggressiveness score and number publications:
-```{r}
+
+#Calculate correlation between aggressiveness score and number publications:
+
 #Kendall correlation between aggressiveness score and number of PubMed publications:
 corAndPvalue(aggressiveness_connectivity_PubMed_COAD$PubMed, aggressiveness_connectivity_PubMed_COAD$aggressiveness,method = "kendall")
-```
 
-```{r}
 # Create the corrrelation figure for aggressiveness score vs. number of PubMed publications:
 plot(data = aggressiveness_connectivity_PubMed_COAD, PubMed ~ aggressiveness,
      xlab = "Aggressiveness score", ylab = "Number of PubMed IDs", pch=19, main = "COAD", xlim = c(-15, 15),
