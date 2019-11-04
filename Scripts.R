@@ -52,19 +52,21 @@ layout(matrix(c(1,1,2,3,4,5), 3, 2, byrow = TRUE),
 
 
 #Plot Figure 1a:
+par(cex.axis = 1.5)
 density_unfavorable = density(Pubmed_unfavorable$PubMed)
 gap.plot(x = density_unfavorable$x, y = density_unfavorable$y, gap = c(250, 7650), gap.axis = "x", type = "l", xlim = c(0, 7750),
-         ylab = "Density", xlab = "Number of PubMed publications", lwd = 1.9, cex.lab = 1.5, cex.axis = 1.5,
+         ylab = "Density", xlab = "Number of PubMed publications", lwd = 1.9, cex.lab = 1.5,
          xtics = c(0, 50, 100, 150, 300, 6500, 7700))
 axis.break(1, 250, breakcol="white", style="gap") #to cover the lines created by the gap.plot fucntion
 axis.break(axis = 1, 250, style = "slash") #to add a pair of slash markers on the x axis
 axis.break(axis = 3, 250, style = "slash")
 abline(v = 50, col = "red")
-text(x = 50, y = 0.015,"cut-off",pos=4, col = "red", cex = 1.5)
+text(x = 50, y = 0.015,"cut-off",pos=4, col = "red", cex = 1.7)
 title(main ="a", adj=0, line=2, font=2, cex.main = 2)
 
 
 # Plot figures 1b-e:
+par(cex.axis = 1)
 slices_enigmatic_autosomal = c(2.5, 7.4, 90.1)
 lbls = c("Autosomal dominant", "Autosomal recessive", "Other")
 lbls = paste(lbls, slices_enigmatic_autosomal) # add percents to labels 
