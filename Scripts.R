@@ -41,57 +41,59 @@ load(file = "Data Inputs/Cindex_GBMLGG.Rdata")
 colnames(unfavorable_genes) = c("genename")
 Pubmed_unfavorable = merge(unfavorable_genes, PubMed, by = "genename")
 colnames(Pubmed_unfavorable)
-        
+
 #Create Figure 1a:
 
 #Open a pdf file
-pdf("Plots/Figure_1a.pdf") 
+
+jpeg("Plots/Figure_1.jpeg", width = 1000, height = 1000, res = 300) 
+
+layout(matrix(c(1,1,2,3,4,5), 3, 2, byrow = TRUE),
+       widths=c(1,1), heights=c(1.2,1,1))
+
 
 #Plot Figure 1a:
 density_unfavorable = density(Pubmed_unfavorable$PubMed)
-gap.plot(x = density_unfavorable$x, y = density_unfavorable$y, gap = c(250, 7650), gap.axis = "x", type = "l", xlim = c(0, 7750), ylab = "Density", xlab = "Number of PubMed publications", xtics = c(0, 50, 100, 150, 300, 6500, 7700))
+gap.plot(x = density_unfavorable$x, y = density_unfavorable$y, gap = c(250, 7650), gap.axis = "x", type = "l", xlim = c(0, 7750),
+         ylab = "Density", xlab = "Number of PubMed publications", lwd = 1.9, cex.lab = 1.3, cex.axis = 1.3,
+         xtics = c(0, 50, 100, 150, 300, 6500, 7700))
 axis.break(1, 250, breakcol="white", style="gap") #to cover the lines created by the gap.plot fucntion
 axis.break(axis = 1, 250, style = "slash") #to add a pair of slash markers on the x axis
 axis.break(axis = 3, 250, style = "slash")
 abline(v = 50, col = "red")
 text(x = 50, y = 0.015,"cut-off",pos=4, col = "red")
 
-# Close the pdf file
-dev.off() 
-#################################################################################################
 
-# Create pie charts for Figure 1 b-e:
-pdf("Plots/Figure_1b_to_e.pdf", 8,7) 
-
-par(mfrow = c(2,2), mar =c(3,5,1,9))
+# Plot figures 1b-e:
 slices_enigmatic_autosomal = c(2.5, 7.4, 90.1)
 lbls = c("Autosomal dominant", "Autosomal recessive", "Other")
 lbls = paste(lbls, slices_enigmatic_autosomal) # add percents to labels 
 lbls = paste(lbls,"%",sep="") # add % to labels 
-pie(slices_enigmatic_autosomal, labels = lbls, main="Functionally enigmatic genes", col = c("darkgoldenrod1", "cornflowerblue", "darkgray"))
+pie(slices_enigmatic_autosomal, labels = lbls, cex = 1.3, main="Functionally enigmatic genes", col = c("darkgoldenrod1", "cornflowerblue", "darkgray"))
 
 slices_wellstudied_autosomal = c(14.7,15.0, 70.3)
 lbls = c("Autosomal dominant", "Autosomal recessive", "Other")
 lbls = paste(lbls, slices_wellstudied_autosomal) # add percents to labels 
 lbls = paste(lbls,"%",sep="") # add % to labels 
-pie(slices_wellstudied_autosomal, labels = lbls, main="Well-studied genes", col = c("darkgoldenrod1", "cornflowerblue", "darkgray"))
+pie(slices_wellstudied_autosomal, labels = lbls, cex = 1.3, main="Well-studied genes", col = c("darkgoldenrod1", "cornflowerblue", "darkgray"))
 
 slices_enigmatic_species = c(753,102, 3507)
 lbls = c("Eukaryote", "Primate", "Other")
 pct = round(slices_enigmatic_species/sum(slices_enigmatic_species)*100, digits = 1)
 lbls = paste(lbls, pct) # add percents to labels 
 lbls = paste(lbls,"%",sep="") # add % to labels 
-pie(slices_enigmatic_species, labels = lbls, col = c( "aquamarine4", "hotpink", "darkgray"))
+pie(slices_enigmatic_species, labels = lbls, cex = 1.3, col = c( "aquamarine4", "hotpink", "darkgray"))
 
 slices_wellstudied_species = c(555,19,1607)
 lbls = c("Eukaryote", "Primate", "Other")
 pct = round(slices_wellstudied_species/sum(slices_wellstudied_species)*100, digits = 1)
 lbls = paste(lbls, pct) # add percents to labels 
 lbls = paste(lbls,"%",sep="") # add % to labels 
-pie(slices_wellstudied_species, labels = lbls, col = c("aquamarine4","hotpink", "darkgray"))
+pie(slices_wellstudied_species, cex = 1.3, labels = lbls, col = c("aquamarine4","hotpink", "darkgray"))
 
 dev.off()
 #################################################################################################
+
 
 ## 2. WGCNA Analysis for prostate adenocarcinoma (PRAD) data set
 
@@ -129,7 +131,6 @@ plot(sampleTree, main = "Sample clustering to detect outliers for PRAD", sub="",
 dev.off()
 #It appears there is no obvious outlier. The variable PRADdata now contains the expression data ready for WGCNA analysis.
 #################################################################################################
-
 
 #Choosing a soft-thresholding power. Constructing a weighted gene network entails the choice of the soft thresholding power β to which co-expression
 #similarity is raised to calculate adjacency. The choice of the soft thresholding power is based on the criterion of approximate scale-free topology:
