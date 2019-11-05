@@ -903,11 +903,48 @@ head(annotation_bymodule)
 save(annotation_bymodule, file = "Data Outputs/Annotation by module GBMLGG.Rfile")
 #################################################################################################
 
+## 7. Create figures 2
+#Open a jpeg file
+jpeg("Plots/Figure_2.jpeg", width = 3200, height = 3200, res = 300) 
 
+layout(matrix(c(1,2,3,0), 2, 2, byrow = TRUE),
+       widths=c(1.5,1.5), heights=c(1,1))
 
-## 6. Extract modules for network visualization in Cytoscape:
+plot(data = connectivity_PubMed_COAD, PubMed ~ scaledconnectivity, xlim = c(0, 1.19),
+     xlab = "Scaled connectivity of genes", ylab = "Number of PubMed IDs", pch=19, main = "COAD",
+     col=ifelse(PubMed > 7000 | scaledconnectivity == max(scaledconnectivity), "red", "black"))
+with(data = connectivity_PubMed_COAD,
+     text(PubMed ~ scaledconnectivity, pos = 4, cex = 0.80,
+          labels=ifelse(PubMed > 7000 | scaledconnectivity == max(scaledconnectivity), 
+                        as.character(connectivity_PubMed_COAD$genename), "")))
+title(main ="a", adj=0, line=2, font=2, cex.main = 2)
 
-# 6a. Extract GBMLGG "saddlebrown" module:
+plot(data = connectivity_PubMed_COAD, PubMed ~ scaledconnectivity, xlim = c(0, 1.19),
+     xlab = "Scaled connectivity of genes", ylab = "Number of PubMed IDs", pch=19, main = "COAD",
+     col=ifelse(PubMed > 7000 | scaledconnectivity == max(scaledconnectivity), "red", "black"))
+with(data = connectivity_PubMed_COAD,
+     text(PubMed ~ scaledconnectivity, pos = 4, cex = 0.80,
+          labels=ifelse(PubMed > 7000 | scaledconnectivity == max(scaledconnectivity), 
+                        as.character(connectivity_PubMed_COAD$genename), "")))
+title(main ="b", adj=0, line=2, font=2, cex.main = 2)
+
+plot(data = connectivity_PubMed_GBMLGG, PubMed ~ scaledconnectivity, xlim = c(0, 1.19),
+     xlab = "Scaled connectivity of genes", ylab = "Number of PubMed IDs", pch=19, main = "GBMLGG",
+     col=ifelse(PubMed > 7000 | scaledconnectivity == max(scaledconnectivity), "red", "black"))
+with(data = connectivity_PubMed_GBMLGG,
+     text(PubMed ~ scaledconnectivity, pos = 4, cex = 0.80,
+          labels=ifelse(PubMed > 7000 | scaledconnectivity == max(scaledconnectivity), 
+                        as.character(connectivity_PubMed_GBMLGG$genename), "")))
+title(main ="c", adj=0, line=2, font=2, cex.main = 2)
+
+dev.off()
+#################################################################################################
+## 8. Create figures 3
+
+#################################################################################################
+## 9. Extract modules for network visualization in Cytoscape:
+
+# 9a. Extract GBMLGG "saddlebrown" module:
 
 # Select modules
 modules = c("saddlebrown")
@@ -931,7 +968,7 @@ cyt = exportNetworkToCytoscape(modTOM,
                                nodeAttr = moduleColors_GBMLGG[inModule])
 
 #################################################################################################
-# 6b. Extract COAD "cyan" module containing APOL6:
+# 9b. Extract COAD "cyan" module containing APOL6:
 
 # Select modules
 modules = c("cyan")
@@ -955,7 +992,7 @@ cyt = exportNetworkToCytoscape(modTOM,
                                nodeAttr = moduleColors_COAD[inModule])
 #################################################################################################
 
-# c. Extract COAD "blue" module containing C6orf48:
+# 9c. Extract COAD "blue" module containing C6orf48:
 
 # Select modules
 modules = c("blue")
