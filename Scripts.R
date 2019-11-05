@@ -1,9 +1,13 @@
 #Compiled by Vy Tran, email: vtran21@jhmi.edu
+#Date: 11/05/2019
 
 #Most codes were modifed from ARCHS4 https://amp.pharm.mssm.edu/archs4/help.html (Ma'ayan et al.), and from the Weight Gene 
 #Correlation Network Analysis (WGCNA) tutorial https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/Rpackages/WGCNA/ 
 #(Peter Langelder and Steve Horvath)
 #################################################################################################
+
+## 0. Load libraries and data:
+
 #Check working directory:
 getwd()
 
@@ -393,21 +397,18 @@ nSamples = nrow(COADdata1)
 powers = c(c(1:10), seq(from = 12, to=20, by=2))
 # Call the network topology analysis function
 sft = pickSoftThreshold(COADdata1, powerVector = powers, verbose = 5)
+
 # Plot the results:
 sizeGrWindow(9, 5)
 par(mfrow = c(1,2));
 cex1 = 0.9;
-# Scale-free topology fit index as a function of the soft-thresholding power
 pdf(file = "Plots/Soft threshold power for COAD.pdf")
+# Scale-free topology fit index as a function of the soft-thresholding power
 plot(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
      xlab="Soft Threshold (power)",ylab="Scale Free Topology Model Fit,signed R^2",type="n",
      main = paste("Scale independence"));
 text(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
      labels=powers,cex=cex1,col="red");
-
-dev.off()
-#################################################################################################
-
 # this line corresponds to using an R^2 cut-off of h
 abline(h=0.90,col="red")
 # Mean connectivity as a function of the soft-thresholding power
@@ -415,6 +416,8 @@ plot(sft$fitIndices[,1], sft$fitIndices[,5],
      xlab="Soft Threshold (power)",ylab="Mean Connectivity", type="n",
      main = paste("Mean connectivity"))
 text(sft$fitIndices[,1], sft$fitIndices[,5], labels=powers, cex=cex1,col="red")
+dev.off()
+#################################################################################################
 
 # Based on the scale-free topology graph, the soft-thresholding power of 6 was chosen.
 
@@ -435,11 +438,14 @@ table(net_COAD$colors)
 
 # Convert labels to colors for plotting
 mergedColors_COAD = labels2colors(net_COAD$colors)
+
 # Plot the dendrogram and the module colors underneath
+pdf("Plots/Cluster dendrogram for COAD.pdf")
 plotDendroAndColors(net_COAD$dendrograms[[1]], mergedColors_COAD[net_COAD$blockGenes[[1]]],
                     "Module colors",
                     dendroLabels = FALSE, hang = 0.03,
                     addGuide = TRUE, guideHang = 0.05, main = "Cluster dendrogram for COAD")
+dev.off()
 
 # We now save the module assignment and module eigengene information necessary for subsequent analysis:
 moduleLabels_COAD = net_COAD$colors
@@ -447,7 +453,7 @@ moduleColors_COAD = labels2colors(net_COAD$colors)
 MEs_COAD = net_COAD$MEs;
 geneTree_COAD = net_COAD$dendrograms[[1]];
 save(MEs_COAD, moduleLabels_COAD, moduleColors_COAD, geneTree_COAD,
-     file = "COADnetwork_modulecolor_and_label.RData")
+     file = "Data Outputs/COADnetwork_modulecolor_and_label.RData")
 
 # Define numbers of genes and samples
 nGenes = ncol(COADdata1)
@@ -521,6 +527,7 @@ save(connectivity_PubMed_COAD, file = "Data Outputs/Scaled connectivity and PubM
 corAndPvalue(connectivity_PubMed_COAD$PubMed, connectivity_PubMed_COAD$scaledconnectivity, method = "kendall")
 
 #Plot a scatterplot to show the correlation between scaled connectivity and publications:
+
 plot(data = connectivity_PubMed_COAD, PubMed ~ scaledconnectivity, xlim = c(0, 1.19),
      xlab = "Scaled connectivity of genes", ylab = "Number of PubMed IDs", pch=19, main = "COAD",
      col=ifelse(PubMed > 7000 | scaledconnectivity == max(scaledconnectivity), "red", "black"))
@@ -532,14 +539,13 @@ with(data = connectivity_PubMed_COAD,
 # We also correlate scaled connectivity with aggressiveness score:
 
 #Load aggressiveness score data:
-load(file = "COAD aggressiveness.Rdata")
 aggressiveness_COAD = as.data.frame(COAD.aggressiveness[, c(3,7)])
 
 #Add aggressiveness score to connectivity_PubMed_COAD dataframe:
 aggressiveness_connectivity_PubMed_COAD = merge(connectivity_PubMed_COAD, aggressiveness_COAD, by = "genename")
 dim(aggressiveness_connectivity_PubMed_COAD)
 #Save the data:
-write.table(aggressiveness_connectivity_PubMed_COAD, file = "Scaled connectivity, PubMed IDs, and aggressivenss score for COAD.csv")
+save(aggressiveness_connectivity_PubMed_COAD, file = "Data Outputs/Scaled connectivity, PubMed IDs, and aggressivenss score for COAD.Rdata")
 
 #Perform correlation between scaled connectivity and aggressiveness score:
 corAndPvalue(aggressiveness_connectivity_PubMed_COAD$scaledconnectivity, aggressiveness_connectivity_PubMed_COAD$aggressiveness, method = "kendall")
@@ -634,6 +640,7 @@ sft = pickSoftThreshold(GBMLGGdata1, powerVector = powers, verbose = 5)
 # Plot the results:
 sizeGrWindow(9, 5)
 pdf(file = "Plots/Soft-thresholding pwoer for GBMLGG.pdf")
+
 par(mfrow = c(1,2));
 cex1 = 0.9;
 # Scale-free topology fit index as a function of the soft-thresholding power
@@ -642,7 +649,6 @@ plot(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
      main = paste("Scale independence"));
 text(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
      labels=powers,cex=cex1,col="red");
-
 # this line corresponds to using an R^2 cut-off of h
 abline(h=0.90,col="red")
 # Mean connectivity as a function of the soft-thresholding power
@@ -672,6 +678,7 @@ table(net_GBMLGG$colors)
 
 # Convert labels to colors for plotting
 mergedColors_GBMLGG = labels2colors(net_GBMLGG$colors)
+
 # Plot the dendrogram and the module colors underneath
 pdf(file = "Plots/Cluster dendrogram for GBMLGG.pdf")
 plotDendroAndColors(net_GBMLGG$dendrograms[[1]], mergedColors_GBMLGG[net_GBMLGG$blockGenes[[1]]],
@@ -721,7 +728,7 @@ geneOrder_GBMLGG = order(geneInfoGBMLGG$moduleColor)
 geneInfoGBMLGG_1 = geneInfoGBMLGG[geneOrder_GBMLGG, ]
 
 # Save the data frame into a text-format spreadsheet:
-write.csv(geneInfoGBMLGG_1, file = "Data Outputs/GBMLGG_geneMM.csv")
+save(geneInfoGBMLGG_1, file = "Data Outputs/GBMLGG_geneMM.Rfile")
 #################################################################################################
 
 # Now we calculate scaled connectivity of genes in the GBMLGG network:
@@ -752,7 +759,7 @@ connectivity_PubMed_GBMLGG = connectivity_PubMed_GBMLGG[, -4]
 colnames(connectivity_PubMed_GBMLGG) = c("entrez", "genename", "PubMed", "scaledconnectivity")
 
 #Save the data:
-write.table(connectivity_PubMed_GBMLGG, file = "Data Outputs/Scaled connectivity and PubMed ID for GBMLGG.csv")
+save(connectivity_PubMed_GBMLGG, file = "Data Outputs/Scaled connectivity and PubMed ID for GBMLGG.Rfile")
 #################################################################################################
 
 #Now we calculate correlation between scaled connectivity and PubMed publications for GBMLGG genes:
@@ -806,30 +813,18 @@ dev.off()
 
 ## 5. Examine the distribution of underannotated genes in modules:
 
-#Load the previously created gene module membership data for PRAD, COAD, and GBMLGG:
-load(file = "Module membership for PRAD, COAD, GBMLGG.Rdata")
-```
-
-```{r}
-# a. Examine the distribution of underannotated genes in PRAD:
-Modulemembership_PRAD = PRAD_geneMM[,c(2,3)]
+# 5a. Examine the distribution of underannotated genes in PRAD:
+Modulemembership_PRAD = geneInfoPRAD_1[,c(1,2)]
 colnames(Modulemembership_PRAD) = c("genename", "modulecolor")
-Modulemembership_PRAD = Modulemembership_PRAD[-1,]
-```
 
-```{r}
 #Separate the "genename" column:
-library(tidyr)
 Modulemembership_PRAD = separate(Modulemembership_PRAD, 1, into = c("genename", "entrez"), sep = "([|])", remove = TRUE)
 
 #Merge the module color with PubMed ID:
 module_PubMed_PRAD = merge(Modulemembership_PRAD, PubMed, by = "entrez")
 module_PubMed_PRAD = module_PubMed_PRAD[,-4]
 module_PubMed_PRAD = as.data.frame(module_PubMed_PRAD)
-head(module_PubMed_PRAD)
-```
 
-```{r}
 #Extract only underannoatation (PubMed <51) genes into a new data set:
 underannotated_PRAD = module_PubMed_PRAD[which(module_PubMed_PRAD$PubMed < 51),]
 
@@ -841,91 +836,88 @@ underannotation_bymodule = aggregate(underannotated_PRAD$PubMed ~ underannotated
                                   length)
 colnames(underannotation_bymodule) = c("modulecolor", "PubMed")
 annotation_bymodule = merge(allannotation_bymodule, underannotation_bymodule, by = "modulecolor")          
-colnames(annotation_bymodule) = c("modulecolor", "allgenes", "underannotated_genes")
-head(annotation_by module)
-write.table(annotation_bymodule, file = "Annotation by module PRAD.txt")
-```
+colnames(annotation_bymodule) = c("Module.color", "Total.genes", "Functionally.enigmatic.genes")
+annotation_bymodule = mutate(annotation_bymodule, Percent.functionally.enigmatic.genes = Functionally.enigmatic.genes*100/Total.genes)
+annotation_bymodule = arrange(annotation_bymodule, desc(Percent.functionally.enigmatic.genes))
+head(annotation_bymodule)
+save(annotation_bymodule, file = "Data Outputs/Annotation by module PRAD.Rfile")
+#################################################################################################
 
-```{r}
-# b. Examine the distribution of underannotated genes in COAD:
-Modulemembership_COAD = COAD_geneMM[,c(2,3)]
+# 5b. Examine the distribution of underannotated genes in COAD:
+Modulemembership_COAD = geneInfoCOAD_1[,c(1,2)]
 colnames(Modulemembership_COAD) = c("genename", "modulecolor")
-Modulemembership_COAD = Modulemembership_COAD[-1,]
-```
 
-```{r}
 #Separate the "genename" column:
-library(tidyr)
 Modulemembership_COAD = separate(Modulemembership_COAD, 1, into = c("genename", "entrez"), sep = "([|])", remove = TRUE)
 
 #Merge the module color with PubMed ID:
 module_PubMed_COAD = merge(Modulemembership_COAD, PubMed, by = "entrez")
 module_PubMed_COAD = module_PubMed_COAD[,-4]
 module_PubMed_COAD = as.data.frame(module_PubMed_COAD)
-head(module_PubMed_COAD)
-```
 
-```{r}
 #Extract only underannoatation (PubMed <51) genes into a new data set:
 underannotated_COAD = module_PubMed_COAD[which(module_PubMed_COAD$PubMed < 51),]
 
 #Count the number of all genes and underannotated genes in each module:
-allannotation_bymodule = aggregate(module_PubMed_COAD$PubMed ~ module_PubMed_COAD$modulecolor, data = module_PubMed_COAD,length)
+allannotation_bymodule = aggregate(module_PubMed_COAD$PubMed ~ module_PubMed_COAD$modulecolor, data = module_PubMed_COAD,
+                                   length)
 colnames(allannotation_bymodule) = c("modulecolor", "PubMed")
-underannotation_bymodule = aggregate(underannotated_COAD$PubMed ~ underannotated_COAD$modulecolor, data = underannotated_COAD, length)
+underannotation_bymodule = aggregate(underannotated_COAD$PubMed ~ underannotated_COAD$modulecolor, data = underannotated_COAD,
+                                     length)
 colnames(underannotation_bymodule) = c("modulecolor", "PubMed")
 annotation_bymodule = merge(allannotation_bymodule, underannotation_bymodule, by = "modulecolor")          
-colnames(annotation_bymodule) = c("modulecolor", "allgenes", "underannotated_genes")
+colnames(annotation_bymodule) = c("Module.color", "Total.genes", "Functionally.enigmatic.genes")
+annotation_bymodule = mutate(annotation_bymodule, Percent.functionally.enigmatic.genes = Functionally.enigmatic.genes*100/Total.genes)
+annotation_bymodule = arrange(annotation_bymodule, desc(Percent.functionally.enigmatic.genes))
 head(annotation_bymodule)
-write.table(annotation_bymodule, file = "Annotation by module COAD.txt")
-```
+save(annotation_bymodule, file = "Data Outputs/Annotation by module COAD.Rfile")
+#################################################################################################
 
-```{r}
-# c. Examine the distribution of underannotated genes in GBMLGG:
-Modulemembership_GBMLGG = GBMLGG_geneMM[,c(2,3)]
+# 5c. Examine the distribution of underannotated genes in GBMLGG:
+Modulemembership_GBMLGG = geneInfoGBMLGG_1[,c(1,2)]
 colnames(Modulemembership_GBMLGG) = c("genename", "modulecolor")
-Modulemembership_GBMLGG = Modulemembership_GBMLGG[-1,]
-```
 
-```{r}
 #Separate the "genename" column:
-
 Modulemembership_GBMLGG = separate(Modulemembership_GBMLGG, 1, into = c("genename", "entrez"), sep = "([|])", remove = TRUE)
 
 #Merge the module color with PubMed ID:
 module_PubMed_GBMLGG = merge(Modulemembership_GBMLGG, PubMed, by = "entrez")
 module_PubMed_GBMLGG = module_PubMed_GBMLGG[,-4]
 module_PubMed_GBMLGG = as.data.frame(module_PubMed_GBMLGG)
-head(module_PubMed_GBMLGG)
-```
 
-```{r}
 #Extract only underannoatation (PubMed <51) genes into a new data set:
 underannotated_GBMLGG = module_PubMed_GBMLGG[which(module_PubMed_GBMLGG$PubMed < 51),]
 
 #Count the number of all genes and underannotated genes in each module:
-allannotation_bymodule = aggregate(module_PubMed_GBMLGG$PubMed ~ module_PubMed_GBMLGG$modulecolor, data = module_PubMed_GBMLGG,length)
+allannotation_bymodule = aggregate(module_PubMed_GBMLGG$PubMed ~ module_PubMed_GBMLGG$modulecolor, data = module_PubMed_GBMLGG,
+                                   length)
 colnames(allannotation_bymodule) = c("modulecolor", "PubMed")
-underannotation_bymodule = aggregate(underannotated_GBMLGG$PubMed ~ underannotated_GBMLGG$modulecolor, data = underannotated_GBMLGG,length)
+underannotation_bymodule = aggregate(underannotated_GBMLGG$PubMed ~ underannotated_GBMLGG$modulecolor, data = underannotated_GBMLGG,
+                                     length)
 colnames(underannotation_bymodule) = c("modulecolor", "PubMed")
 annotation_bymodule = merge(allannotation_bymodule, underannotation_bymodule, by = "modulecolor")          
-colnames(annotation_bymodule) = c("modulecolor", "allgenes", "underannotated_genes")
+colnames(annotation_bymodule) = c("Module.color", "Total.genes", "Functionally.enigmatic.genes")
+annotation_bymodule = mutate(annotation_bymodule, Percent.functionally.enigmatic.genes = Functionally.enigmatic.genes*100/Total.genes)
+annotation_bymodule = arrange(annotation_bymodule, desc(Percent.functionally.enigmatic.genes))
 head(annotation_bymodule)
-write.table(annotation_bymodule, file = "Annotation by module GBMLGG.txt")
+save(annotation_bymodule, file = "Data Outputs/Annotation by module GBMLGG.Rfile")
+#################################################################################################
+
+
 
 ## 6. Extract modules for network visualization in Cytoscape:
 
-# a. Extract GBMLGG "saddlebrown" module:
+# 6a. Extract GBMLGG "saddlebrown" module:
 
 # Select modules
-modules = c("purple")
+modules = c("saddlebrown")
 
 # Select module probes
 Genes = colnames(GBMLGGdata1)
 inModule = is.finite(match(moduleColors_GBMLGG, modules))
 modGenes =Genes[inModule]
 
-# Select the corresponding Topological Overlap
+# Select the corresponding topological overlap
 modTOM = tom_GBMLGG[inModule, inModule]
 dimnames(modTOM) = list(modGenes, modGenes)
 
@@ -937,10 +929,9 @@ cyt = exportNetworkToCytoscape(modTOM,
                                threshold = 0.06,
                                nodeNames = modGenes,
                                nodeAttr = moduleColors_GBMLGG[inModule])
-```
 
-```{r}
-# b. Extract COAD "cyan" module containing APOL6:
+#################################################################################################
+# 6b. Extract COAD "cyan" module containing APOL6:
 
 # Select modules
 modules = c("cyan")
@@ -962,9 +953,8 @@ cyt = exportNetworkToCytoscape(modTOM,
                                threshold = 0.06,
                                nodeNames = modGenes,
                                nodeAttr = moduleColors_COAD[inModule])
-```
+#################################################################################################
 
-```{r}
 # c. Extract COAD "blue" module containing C6orf48:
 
 # Select modules
