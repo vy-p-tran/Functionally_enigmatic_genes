@@ -363,7 +363,6 @@ plot(sampleTree, main = "Sample clustering to detect outliers", sub="", xlab="",
      cex.axis = 1.5, cex.main = 2)
 
 dev.off()
-# It appears there is 1 outlier.
 #################################################################################################
 
 #Outlier removal: 
@@ -390,13 +389,13 @@ COADdata1 = COADdata[keepSamples, ]
 nGenes = ncol(COADdata1)
 nSamples = nrow(COADdata1)
 
-#Now the COADdata1 matrix is ready for WGCNA analysis.
+#Now the COADdata matrix is ready for WGCNA analysis.
 #################################################################################################
 
 # Choose a set of soft-thresholding powers
 powers = c(c(1:10), seq(from = 12, to=20, by=2))
 # Call the network topology analysis function
-sft = pickSoftThreshold(COADdata1, powerVector = powers, verbose = 5)
+sft = pickSoftThreshold(COADdata11, powerVector = powers, verbose = 5)
 
 # Plot the results:
 sizeGrWindow(9, 5)
@@ -762,23 +761,6 @@ colnames(connectivity_PubMed_GBMLGG) = c("entrez", "genename", "PubMed", "scaled
 save(connectivity_PubMed_GBMLGG, file = "Data Outputs/Scaled connectivity and PubMed ID for GBMLGG.Rfile")
 #################################################################################################
 
-#Now we calculate correlation between scaled connectivity and PubMed publications for GBMLGG genes:
-
-#Calcualte Kendall correlation between scaled connectivity and PubMed number:
-corAndPvalue(connectivity_PubMed_GBMLGG$PubMed, connectivity_PubMed_GBMLGG$scaledconnectivity, method = "kendall")
-
-#Plot a scatterplot to show the correlation between scaled connectivity and publications:
-pdf(file = "Plots/Figure_3a.pdf")
-plot(data = connectivity_PubMed_GBMLGG, PubMed ~ scaledconnectivity, xlim = c(0, 1.19),
-     xlab = "Scaled connectivity of genes", ylab = "Number of PubMed IDs", pch=19, main = "GBMLGG",
-     col=ifelse(PubMed > 7000 | scaledconnectivity == max(scaledconnectivity), "red", "black"))
-with(data = connectivity_PubMed_GBMLGG,
-     text(PubMed ~ scaledconnectivity, pos = 4, cex = 0.80,
-          labels=ifelse(PubMed > 7000 | scaledconnectivity == max(scaledconnectivity), 
-                        as.character(connectivity_PubMed_GBMLGG$genename), "")))
-dev.off()
-#################################################################################################
-
 #We also correlate scaled connectivity with C index score, a metric for glioma severity:
 colnames(GBMLGG.Cindex) = c("genename", "entrez", "Q", "C_index")
 
@@ -910,17 +892,19 @@ jpeg("Plots/Figure_2.jpeg", width = 3200, height = 3200, res = 300)
 layout(matrix(c(1,2,3,0), 2, 2, byrow = TRUE),
        widths=c(1.5,1.5), heights=c(1,1))
 
-plot(data = connectivity_PubMed_COAD, PubMed ~ scaledconnectivity, xlim = c(0, 1.19),
-     xlab = "Scaled connectivity of genes", ylab = "Number of PubMed IDs", pch=19, main = "COAD",
+plot(data = connectivity_PubMed_PRAD, PubMed ~ scaledconnectivity, xlim = c(0, 1.15),
+     xlab = "Scaled connectivity of genes", ylab = "Number of PubMed IDs", pch=19, main = "PRAD", 
+     frame.plot = FALSE, cex.lab = 1.2,
      col=ifelse(PubMed > 7000 | scaledconnectivity == max(scaledconnectivity), "red", "black"))
-with(data = connectivity_PubMed_COAD,
+with(data = connectivity_PubMed_PRAD,
      text(PubMed ~ scaledconnectivity, pos = 4, cex = 0.80,
           labels=ifelse(PubMed > 7000 | scaledconnectivity == max(scaledconnectivity), 
-                        as.character(connectivity_PubMed_COAD$genename), "")))
+                        as.character(connectivity_PubMed_PRAD$genename), "")))
 title(main ="a", adj=0, line=2, font=2, cex.main = 2)
 
 plot(data = connectivity_PubMed_COAD, PubMed ~ scaledconnectivity, xlim = c(0, 1.19),
      xlab = "Scaled connectivity of genes", ylab = "Number of PubMed IDs", pch=19, main = "COAD",
+     frame.plot = FALSE, cex.lab = 1.2,
      col=ifelse(PubMed > 7000 | scaledconnectivity == max(scaledconnectivity), "red", "black"))
 with(data = connectivity_PubMed_COAD,
      text(PubMed ~ scaledconnectivity, pos = 4, cex = 0.80,
@@ -930,6 +914,7 @@ title(main ="b", adj=0, line=2, font=2, cex.main = 2)
 
 plot(data = connectivity_PubMed_GBMLGG, PubMed ~ scaledconnectivity, xlim = c(0, 1.19),
      xlab = "Scaled connectivity of genes", ylab = "Number of PubMed IDs", pch=19, main = "GBMLGG",
+     frame.plot = FALSE, cex.lab = 1.2,
      col=ifelse(PubMed > 7000 | scaledconnectivity == max(scaledconnectivity), "red", "black"))
 with(data = connectivity_PubMed_GBMLGG,
      text(PubMed ~ scaledconnectivity, pos = 4, cex = 0.80,
@@ -939,8 +924,43 @@ title(main ="c", adj=0, line=2, font=2, cex.main = 2)
 
 dev.off()
 #################################################################################################
-## 8. Create figures 3
 
+## 8. Create figures 3
+#Open a jpeg file
+jpeg("Plots/Figure_3.jpeg", width = 3200, height = 3200, res = 300) 
+
+layout(matrix(c(1,2,3,0), 2, 2, byrow = TRUE),
+       widths=c(1.5,1.5), heights=c(1,1))
+
+plot(data = Gleason_connectivity_PubMed_PRAD, PubMed ~ GleasonScore,
+     xlab = "Gleason score", ylab = "Number of PubMed IDs", pch=19, main = "PRAD", xlim = c(-0.3, 0.4),
+     frame.plot = FALSE, cex.lab = 1.2,
+     col=ifelse(PubMed == max(PubMed)|  GleasonScore> 0.302 , "red", "black"))
+with(data = Gleason_connectivity_PubMed_PRAD,
+     text(PubMed ~GleasonScore, pos = 4, cex = 0.8,
+          labels=ifelse(PubMed == max(PubMed)|  GleasonScore > 0.302, 
+                        Gleason_connectivity_PubMed_PRAD$gemename, "")))
+title(main ="a", adj=0, line=2, font=2, cex.main = 2)
+
+plot(data = aggressiveness_connectivity_PubMed_COAD, aggressiveness ~ scaledconnectivity, xlim = c(0, 1.19),
+     frame.plot = FALSE, cex.lab = 1.2,
+     xlab = "Scaled connectivity of genes", ylab = "Aggressiveness score", pch=19, main = "COAD",
+     col=ifelse(aggressiveness > 11|scaledconnectivity == max(scaledconnectivity), "red", "black"))
+with(data = aggressiveness_connectivity_PubMed_COAD, text(aggressiveness ~ scaledconnectivity, pos = 4, cex = 0.80,
+                                                          labels=ifelse(aggressiveness > 11|scaledconnectivity == max(scaledconnectivity), 
+                                                                        as.character(aggressiveness_connectivity_PubMed_COAD$genename), "")))
+title(main ="b", adj=0, line=2, font=2, cex.main = 2)
+
+plot(data = Cindex_connectivity_PubMed_GBMLGG, PubMed ~ C_index, xlab = "C-index score", 
+     frame.plot = FALSE, cex.lab = 1.2,
+     ylab = "Number of PubMed IDs", pch=19, main = "GBMLGG",
+     col=ifelse(C_index > 0.83|PubMed == max(PubMed), "red", "black"))
+with(data = Cindex_connectivity_PubMed_GBMLGG, text(PubMed ~ C_index, pos = 4, cex = 0.80,
+                                                    labels=ifelse(C_index > 0.83|PubMed == max(PubMed), 
+                                                                  as.character(Cindex_connectivity_PubMed_GBMLGG$genename),"")))
+title(main ="c", adj=0, line=2, font=2, cex.main = 2)
+
+dev.off()
 #################################################################################################
 ## 9. Extract modules for network visualization in Cytoscape:
 
