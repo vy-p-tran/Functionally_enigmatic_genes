@@ -17,19 +17,19 @@ if(!require("BiocManager", "plotrix")){
 }
 
 BiocManager::install("WGCNA")
-install.packages("tidyverse")
+ainstall.packages("tidyverse")
 library(tidyverse)
 library(WGCNA)
 library(plotrix)
-library(tidyverse)
+
 
 # Important setting:
 options(stringsAsFactors=FALSE) 
 
 #Load RNA-seq data:
-load(file = "Data Inputs/PRAD.Rfile") #Loaded as PRAD_DATA
-load(file = "Data Inputs/COAD.Rfile") #Loaded as COAD_DATA
-load(file = "Data Inputs/GBMLGG.Rfile") #Loaded as GBMLGG_DATA
+load(file = "Data Inputs/PRAD.Rdata") #Loaded as PRAD_DATA
+load(file = "Data Inputs/COAD.Rdata") #Loaded as COAD_DATA
+load(file = "Data Inputs/GBMLGG.Rdata") #Loaded as GBMLGG_DATA
 
 #Load PubMed publications, unfavorable genes, and disease index data:
 load(file = "Data Inputs/PubMed_ID_for_all_TCGA_genes.Rdata") #Loaded as PubMed
@@ -363,39 +363,34 @@ plot(sampleTree, main = "Sample clustering to detect outliers", sub="", xlab="",
      cex.axis = 1.5, cex.main = 2)
 
 dev.off()
-#################################################################################################
 
-#Outlier removal: 
+#It appears there is 1 outlier. Outlier removal: 
 
 # Plot a line to show the cut
-
 sizeGrWindow(12,9)
-#pdf(file = "Plots/sampleClustering.pdf", width = 12, height = 9);
+pdf(file = "Plots/Sample clustering to detect outliers_COAD_outlier removal.pdf", width = 12, height = 9);
 par(cex = 0.6);
 par(mar = c(0,4,2,0))
-pdf(file = "Plots/Sample clustering to detect outliers_outlier removal_COAD.pdf")
 plot(sampleTree, main = "Sample clustering to detect outliers", sub="", xlab="", cex.lab = 1.5,
      cex.axis = 1.5, cex.main = 2)
-abline(h = 1500000, col = "red");
+abline(h = 1500000, col = "red")
 
 dev.off()
 
 # Determine cluster under the line
-clust = cutreeStatic(sampleTree, cutHeight = 1500000, minSize = 10)
+clust = cutreeStatic(sampleTree, cutHeight = 2500000, minSize = 10)
 table(clust)
-# clust 1 contains the samples we want to keep.
+# Clust 1 contains the samples we want to keep
 keepSamples = (clust==1)
 COADdata1 = COADdata[keepSamples, ]
-nGenes = ncol(COADdata1)
-nSamples = nrow(COADdata1)
 
-#Now the COADdata matrix is ready for WGCNA analysis.
+# Now the GBMLGGdata1 matrix is ready for WGCNA analysis.
 #################################################################################################
 
 # Choose a set of soft-thresholding powers
 powers = c(c(1:10), seq(from = 12, to=20, by=2))
 # Call the network topology analysis function
-sft = pickSoftThreshold(COADdata11, powerVector = powers, verbose = 5)
+sft = pickSoftThreshold(COADdata1, powerVector = powers, verbose = 5)
 
 # Plot the results:
 sizeGrWindow(9, 5)
@@ -486,7 +481,7 @@ geneInfoCOAD = data.frame(Genename = colnames(COADdata1),
 geneOrder_COAD = order(geneInfoCOAD$moduleColor)
 geneInfoCOAD_1 = geneInfoCOAD[geneOrder_COAD, ]
 
-save(geneInfoCOAD_1, file = "Data Outputs/COAD_geneMM.Rfile")
+save(geneInfoCOAD_1, file = "Data Outputs/COAD_geneMM.Rdata")
 #################################################################################################
 
 
@@ -851,8 +846,8 @@ annotation_bymodule = merge(allannotation_bymodule, underannotation_bymodule, by
 colnames(annotation_bymodule) = c("Module.color", "Total.genes", "Functionally.enigmatic.genes")
 annotation_bymodule = mutate(annotation_bymodule, Percent.functionally.enigmatic.genes = Functionally.enigmatic.genes*100/Total.genes)
 annotation_bymodule = arrange(annotation_bymodule, desc(Percent.functionally.enigmatic.genes))
-head(annotation_bymodule)
-save(annotation_bymodule, file = "Data Outputs/Annotation by module COAD.Rfile")
+annotation_bymodule_COAD = as.data.frame(annotation_bymodule)
+save(annotation_bymodule_COAD, file = "Data Outputs/Annotation by module COAD.Rdata")
 #################################################################################################
 
 # 5c. Examine the distribution of underannotated genes in GBMLGG:
@@ -881,8 +876,8 @@ annotation_bymodule = merge(allannotation_bymodule, underannotation_bymodule, by
 colnames(annotation_bymodule) = c("Module.color", "Total.genes", "Functionally.enigmatic.genes")
 annotation_bymodule = mutate(annotation_bymodule, Percent.functionally.enigmatic.genes = Functionally.enigmatic.genes*100/Total.genes)
 annotation_bymodule = arrange(annotation_bymodule, desc(Percent.functionally.enigmatic.genes))
-head(annotation_bymodule)
-save(annotation_bymodule, file = "Data Outputs/Annotation by module GBMLGG.Rfile")
+annotation_bymodule_GBMLGG = as.data.frame(annotation_bymodule)
+save(annotation_bymodule_GBMLGG, file = "Data Outputs/Annotation by module GBMLGG.Rdata")
 #################################################################################################
 
 ## 7. Create figures 2
@@ -897,30 +892,39 @@ plot(data = connectivity_PubMed_PRAD, PubMed ~ scaledconnectivity, xlim = c(0, 1
      frame.plot = FALSE, cex.lab = 1.2,
      col=ifelse(PubMed > 7000 | scaledconnectivity == max(scaledconnectivity), "red", "black"))
 with(data = connectivity_PubMed_PRAD,
-     text(PubMed ~ scaledconnectivity, pos = 4, cex = 0.80,
+     text(PubMed ~ scaledconnectivity, pos = 4, cex = 0.9,
           labels=ifelse(PubMed > 7000 | scaledconnectivity == max(scaledconnectivity), 
                         as.character(connectivity_PubMed_PRAD$genename), "")))
 title(main ="a", adj=0, line=2, font=2, cex.main = 2)
+mtext("Kendall = -0.0244", side = 3, line = -1, adj = 1, cex = 1)
+mtext("p-value = 0.0145 ", side = 3, line = -2, adj = 1, cex = 1)
+mtext("Z-score = -2.44  ", side = 3, line = -3, adj = 1, cex = 1)
 
-plot(data = connectivity_PubMed_COAD, PubMed ~ scaledconnectivity, xlim = c(0, 1.19),
+plot(data = connectivity_PubMed_COAD, PubMed ~ scaledconnectivity, xlim = c(0, 1.15),
      xlab = "Scaled connectivity of genes", ylab = "Number of PubMed IDs", pch=19, main = "COAD",
      frame.plot = FALSE, cex.lab = 1.2,
      col=ifelse(PubMed > 7000 | scaledconnectivity == max(scaledconnectivity), "red", "black"))
 with(data = connectivity_PubMed_COAD,
-     text(PubMed ~ scaledconnectivity, pos = 4, cex = 0.80,
+     text(PubMed ~ scaledconnectivity, pos = 4, cex = 0.9,
           labels=ifelse(PubMed > 7000 | scaledconnectivity == max(scaledconnectivity), 
                         as.character(connectivity_PubMed_COAD$genename), "")))
 title(main ="b", adj=0, line=2, font=2, cex.main = 2)
+mtext("Kendall = 0.0390  ", side = 3, line = -1, adj = 1, cex = 1)
+mtext("p-value = 9.54e-05", side = 3, line = -2, adj = 1, cex = 1)
+mtext("Z-score = 3.90    ", side = 3, line = -3, adj = 1, cex = 1)
 
-plot(data = connectivity_PubMed_GBMLGG, PubMed ~ scaledconnectivity, xlim = c(0, 1.19),
+plot(data = connectivity_PubMed_GBMLGG, PubMed ~ scaledconnectivity, xlim = c(0, 1.15),
      xlab = "Scaled connectivity of genes", ylab = "Number of PubMed IDs", pch=19, main = "GBMLGG",
      frame.plot = FALSE, cex.lab = 1.2,
      col=ifelse(PubMed > 7000 | scaledconnectivity == max(scaledconnectivity), "red", "black"))
 with(data = connectivity_PubMed_GBMLGG,
-     text(PubMed ~ scaledconnectivity, pos = 4, cex = 0.80,
+     text(PubMed ~ scaledconnectivity, pos = 4, cex = 0.9,
           labels=ifelse(PubMed > 7000 | scaledconnectivity == max(scaledconnectivity), 
                         as.character(connectivity_PubMed_GBMLGG$genename), "")))
 title(main ="c", adj=0, line=2, font=2, cex.main = 2)
+mtext("Kendall = -0.00591", side = 3, line = -1, adj = 1, cex = 1)
+mtext("p-value = 0.554   ", side = 3, line = -2, adj = 1, cex = 1)
+mtext("Z-score = -0.591  ", side = 3, line = -3, adj = 1, cex = 1)
 
 dev.off()
 #################################################################################################
@@ -930,35 +934,46 @@ dev.off()
 jpeg("Plots/Figure_3.jpeg", width = 3200, height = 3200, res = 300) 
 
 layout(matrix(c(1,2,3,0), 2, 2, byrow = TRUE),
-       widths=c(1.5,1.5), heights=c(1,1))
+       widths=c(1.2,1.2), heights=c(1,1))
 
 plot(data = Gleason_connectivity_PubMed_PRAD, PubMed ~ GleasonScore,
      xlab = "Gleason score", ylab = "Number of PubMed IDs", pch=19, main = "PRAD", xlim = c(-0.3, 0.4),
      frame.plot = FALSE, cex.lab = 1.2,
      col=ifelse(PubMed == max(PubMed)|  GleasonScore> 0.302 , "red", "black"))
 with(data = Gleason_connectivity_PubMed_PRAD,
-     text(PubMed ~GleasonScore, pos = 4, cex = 0.8,
+     text(PubMed ~GleasonScore, pos = 4, cex = 0.9,
           labels=ifelse(PubMed == max(PubMed)|  GleasonScore > 0.302, 
                         Gleason_connectivity_PubMed_PRAD$gemename, "")))
 title(main ="a", adj=0, line=2, font=2, cex.main = 2)
+mtext("Kendall = 0.0486 ", side = 3, line = -1, adj = 1, cex = 1)
+mtext("p-value = 0.00487", side = 3, line = -2, adj = 1, cex = 1)
+mtext("Z-score = 2.81   ", side = 3, line = -3, adj = 1, cex = 1)
 
-plot(data = aggressiveness_connectivity_PubMed_COAD, aggressiveness ~ scaledconnectivity, xlim = c(0, 1.19),
+
+plot(data = aggressiveness_connectivity_PubMed_COAD, PubMed ~ aggressiveness,
+     xlab = "Aggressiveness score", ylab = "Number of PubMed IDs", pch=19, main = "COAD", xlim = c(-15, 15),
      frame.plot = FALSE, cex.lab = 1.2,
-     xlab = "Scaled connectivity of genes", ylab = "Aggressiveness score", pch=19, main = "COAD",
-     col=ifelse(aggressiveness > 11|scaledconnectivity == max(scaledconnectivity), "red", "black"))
-with(data = aggressiveness_connectivity_PubMed_COAD, text(aggressiveness ~ scaledconnectivity, pos = 4, cex = 0.80,
-                                                          labels=ifelse(aggressiveness > 11|scaledconnectivity == max(scaledconnectivity), 
+     col=ifelse(aggressiveness > 11|PubMed == max(PubMed), "red", "black"))
+with(data = aggressiveness_connectivity_PubMed_COAD, text(PubMed ~ aggressiveness, pos = 4, cex = 0.9,
+                                                          labels=ifelse(aggressiveness > 11|PubMed == max(PubMed), 
                                                                         as.character(aggressiveness_connectivity_PubMed_COAD$genename), "")))
 title(main ="b", adj=0, line=2, font=2, cex.main = 2)
+mtext("Kendall = -0.0824", side = 3, line = -1, adj = 1, cex = 1)
+mtext("p-value = 0.0202 ", side = 3, line = -2, adj = 1, cex = 1)
+mtext("Z-score = -2.32  ", side = 3, line = -3, adj = 1, cex = 1)
 
-plot(data = Cindex_connectivity_PubMed_GBMLGG, PubMed ~ C_index, xlab = "C-index score", 
-     frame.plot = FALSE, cex.lab = 1.2,
+
+plot(data = Cindex_connectivity_PubMed_GBMLGG, PubMed ~ C_index, xlab = "C-index score",
+     frame.plot = FALSE, cex.lab = 1.2, xlim = c(0.6,0.9),
      ylab = "Number of PubMed IDs", pch=19, main = "GBMLGG",
      col=ifelse(C_index > 0.83|PubMed == max(PubMed), "red", "black"))
-with(data = Cindex_connectivity_PubMed_GBMLGG, text(PubMed ~ C_index, pos = 4, cex = 0.80,
-                                                    labels=ifelse(C_index > 0.83|PubMed == max(PubMed), 
-                                                                  as.character(Cindex_connectivity_PubMed_GBMLGG$genename),"")))
+with(data = Cindex_connectivity_PubMed_GBMLGG, text(PubMed ~ C_index, pos = 4, cex = 0.9,
+                                                    labels=ifelse(C_index > 0.83|PubMed == max(PubMed),
+                                                                  as.character(Cindex_connectivity_PubMed_GBMLGG$gemename),"")))
 title(main ="c", adj=0, line=2, font=2, cex.main = 2)
+mtext("Kendall = 0.0625  ", side = 3, line = -1, adj = 1, cex = 1)
+mtext("p-value = 0.000599", side = 3, line = -2, adj = 1, cex = 1)
+mtext("Z-score = 3.43    ", side = 3, line = -3, adj = 1, cex = 1)
 
 dev.off()
 #################################################################################################
@@ -994,7 +1009,7 @@ cyt = exportNetworkToCytoscape(modTOM,
 modules = c("cyan")
 
 # Select module probes
-Genes = colnames(COADGdata1)
+Genes = colnames(COADdata1)
 inModule = is.finite(match(moduleColors_COAD, modules))
 modGenes =Genes[inModule]
 
@@ -1018,7 +1033,7 @@ cyt = exportNetworkToCytoscape(modTOM,
 modules = c("blue")
 
 # Select module probes
-Genes = colnames(COADGdata1)
+Genes = colnames(COADdata1)
 inModule = is.finite(match(moduleColors_COAD, modules))
 modGenes =Genes[inModule]
 
